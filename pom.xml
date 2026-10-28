@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>3.5.16</version><relativePath/></parent>
+  <groupId>com.dki</groupId><artifactId>meeting-room-booking</artifactId><version>0.1.0-SNAPSHOT</version><packaging>pom</packaging>
+  <name>Meeting room booking</name>
+  <modules><module>libs/foundation</module><module>libs/identity</module><module>libs/room</module><module>libs/booking</module><module>apps/meeting-api</module></modules>
+  <properties><java.version>17</java.version><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><springdoc.version>2.10.0</springdoc.version></properties>
+  <dependencyManagement><dependencies>
+    <dependency><groupId>com.dki</groupId><artifactId>foundation</artifactId><version>${project.version}</version></dependency>
+<dependency><groupId>com.dki</groupId><artifactId>identity</artifactId><version>${project.version}</version></dependency>
+<dependency><groupId>com.dki</groupId><artifactId>room</artifactId><version>${project.version}</version></dependency>
+<dependency><groupId>com.dki</groupId><artifactId>booking</artifactId><version>${project.version}</version></dependency>
+  </dependencies></dependencyManagement>
+  <dependencies>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>3.6.1</version><executions><execution><id>layer-source-roots</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals><configuration><sources><source>domain/src/main/java</source><source>application/src/main/java</source><source>infra/db/src/main/java</source><source>infra/http/src/main/java</source></sources></configuration></execution></executions></plugin>
+    <plugin><groupId>com.diffplug.spotless</groupId><artifactId>spotless-maven-plugin</artifactId><version>2.44.3</version><configuration><java><includes><include>src/**/*.java</include><include>domain/**/*.java</include><include>application/**/*.java</include><include>infra/**/*.java</include></includes><googleJavaFormat><version>1.25.2</version></googleJavaFormat><removeUnusedImports/></java></configuration><executions><execution><goals><goal>check</goal></goals><phase>validate</phase></execution></executions></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration><excludes><exclude>**/*IT.java</exclude></excludes></configuration></plugin>
+  </plugins></build>
+  <profiles><profile><id>integration</id><build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin></plugins></build></profile></profiles>
+</project>
