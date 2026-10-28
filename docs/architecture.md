@@ -76,8 +76,8 @@ Logout revokes the refresh family. Existing access tokens retain their original 
 
 The service materializes at most 52 occurrences when a request is submitted.
 JDBC makes SQL and locks explicit. Flyway owns schema changes.
-Booking pages load child records per booking, bounded by 100 items.
-A batch query can replace this approach if measured traffic requires it.
+Booking pages batch-load occurrences and attendees for up to 100 headers.
+The query count stays constant as the page grows.
 
 ## History
 
