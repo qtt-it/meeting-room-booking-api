@@ -49,8 +49,6 @@ Kết quả local: 24 unit test, 28 integration test và 25 request Bruno đều
 CI dùng PostgreSQL 17, đúng image của Compose.
 Kết quả CI và container smoke cần đọc trực tiếp tại PR, không suy luận từ unit test.
 
-## Reports
-
 ## Delivery evidence
 
 [Full CI run](https://github.com/qtt-it/meeting-room-booking-api/actions/runs/40642049729) kiểm tra commit `0cac3f0`:
