@@ -78,6 +78,23 @@ public class JdbcBookingRepository implements BookingRepository {
           .update();
   }
 
+  public void changeStatus(UUID id, String status, UUID actor, String reason, Instant now) {
+    jdbc.sql(
+            "update booking set status=:status,version=version+1,decided_by=:actor,decision_reason=:reason,updated_at=:now,updated_by=:actor where id=:id")
+        .param("id", id)
+        .param("status", status)
+        .param("actor", actor)
+        .param("reason", reason)
+        .param("now", Timestamp.from(now))
+        .update();
+    jdbc.sql(
+            "update booking_occurrence set status=:status where booking_id=:id and (:status<>'cancelled' or starts_at>:now)")
+        .param("id", id)
+        .param("status", status)
+        .param("now", Timestamp.from(now))
+        .update();
+  }
+
   public PageResult<Booking> list(Actor actor, String scope, String status, int page, int size) {
     String filter = " where (:status='' or b.status=:status)";
     if (scope.equals("mine")) filter += " and b.organizer_id=:actor";
