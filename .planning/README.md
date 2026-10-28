@@ -2,15 +2,15 @@
 
 Each story records acceptance criteria, implementation tasks, verification and review status.
 
-| Story | Branch | Scope |
-| --- | --- | --- |
-| [MB-001](backlog/stories/MB-001.md) | feature/MB-001-project-foundation | Project foundation |
-| [MB-002](backlog/stories/MB-002.md) | feature/MB-002-identity-and-access | Employee identity and access |
-| [MB-003](backlog/stories/MB-003.md) | feature/MB-003-room-management | Room catalog and capacity |
-| [MB-004](backlog/stories/MB-004.md) | feature/MB-004-booking-and-recurrence | Booking requests and recurrence |
-| [MB-005](backlog/stories/MB-005.md) | feature/MB-005-booking-approval | Approval and cancellation |
-| [MB-006](backlog/stories/MB-006.md) | feature/MB-006-invitations-and-availability | Invitations and alternative rooms |
-| [MB-007](backlog/stories/MB-007.md) | feature/MB-007-devops-and-documentation | DevOps and handoff documentation |
+| Story | Branch | Scope | Pull request |
+| --- | --- | --- | --- |
+| [MB-001](backlog/stories/MB-001.md) | feature/MB-001-project-foundation | Project foundation | [#8](https://github.com/qtt-it/meeting-room-booking-api/pull/8) |
+| [MB-002](backlog/stories/MB-002.md) | feature/MB-002-identity-and-access | Employee identity and access | [#10](https://github.com/qtt-it/meeting-room-booking-api/pull/10) |
+| [MB-003](backlog/stories/MB-003.md) | feature/MB-003-room-management | Room catalog and capacity | [#11](https://github.com/qtt-it/meeting-room-booking-api/pull/11) |
+| [MB-004](backlog/stories/MB-004.md) | feature/MB-004-booking-and-recurrence | Booking requests and recurrence | [#12](https://github.com/qtt-it/meeting-room-booking-api/pull/12) |
+| [MB-005](backlog/stories/MB-005.md) | feature/MB-005-booking-approval | Approval and cancellation | [#13](https://github.com/qtt-it/meeting-room-booking-api/pull/13) |
+| [MB-006](backlog/stories/MB-006.md) | feature/MB-006-invitations-and-availability | Invitations and alternative rooms | [#14](https://github.com/qtt-it/meeting-room-booking-api/pull/14) |
+| [MB-007](backlog/stories/MB-007.md) | feature/MB-007-devops-and-documentation | DevOps and handoff documentation | [#15](https://github.com/qtt-it/meeting-room-booking-api/pull/15) |
 
 Integrate MB-001 through MB-007 in order.
 Each feature targets develop after its prerequisite is merged.

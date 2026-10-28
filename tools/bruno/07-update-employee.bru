@@ -1,0 +1,33 @@
+meta {
+  name: Update employee
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/v1/users/{{employeeId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "displayName": "Demo employee",
+    "role": "user",
+    "isActive": true,
+    "version": 0
+  }
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

@@ -1,0 +1,43 @@
+meta {
+  name: Admin login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:pre-request {
+  bru.setVar("runId", String(Date.now()));
+  const date = new Date(); date.setUTCDate(date.getUTCDate()+2); date.setUTCHours(3,0,0,0);
+  if (date.getUTCDay() === 0) date.setUTCDate(date.getUTCDate()+1);
+  bru.setVar("startsAt", date.toISOString());
+  bru.setVar("endsAt", new Date(date.getTime()+3600000).toISOString());
+}
+
+script:post-response {
+  bru.setVar("token", res.getBody().data.accessToken);
+  bru.setVar("refreshToken", res.getBody().data.refreshToken);
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

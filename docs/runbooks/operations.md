@@ -39,8 +39,12 @@ Sau lần khởi tạo, bỏ bootstrap password khỏi cấu hình triển khai.
 - Không ghi password, access token hoặc refresh token vào log ứng dụng.
 - Không bật log request body khi xử lý dữ liệu thật.
 
+Bộ Bruno tạo tài khoản, phòng và booking; chỉ chạy trên database demo tạm.
+Không sử dụng collection như healthcheck trên production.
+
 Login rate limit là 20 request/IP/phút trong một instance.
 Khi có reverse proxy hoặc nhiều replica, cấu hình giới hạn tại ingress.
+Ingress cần giới hạn JSON request body, timeout và kết nối đồng thời theo tải triển khai.
 App không tự tin header Forwarded/X-Forwarded-For của client.
 
 ## Khởi chạy và dừng
@@ -71,7 +75,7 @@ Không ghi đè database đang hoạt động khi chưa có kế hoạch chuyể
 
 ## Deploy và rollback
 
-1. Chạy CI và container smoke.
+1. Chạy CI, container smoke và bộ 25 request Bruno trên database tạm.
 2. Chụp backup.
 3. Chạy migration với role migrator.
 4. Chạy image mới và chờ readiness.

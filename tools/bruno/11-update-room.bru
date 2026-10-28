@@ -1,0 +1,39 @@
+meta {
+  name: Update room
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{baseUrl}}/api/v1/rooms/{{roomId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "name": "Demo {{runId}}",
+    "location": "HQ",
+    "floor": "2",
+    "capacity": 20,
+    "equipment": [
+      "projector",
+      "whiteboard"
+    ],
+    "isActive": true,
+    "version": 0
+  }
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

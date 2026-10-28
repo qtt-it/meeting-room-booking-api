@@ -1,0 +1,23 @@
+meta {
+  name: Approval queue
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/v1/bookings?scope=all&status=pending&page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}
