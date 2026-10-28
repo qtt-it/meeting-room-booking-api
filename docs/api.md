@@ -67,7 +67,7 @@ Password dài ít nhất 12 ký tự, nhiều nhất 72 byte UTF-8.
 ```
 
 PUT cần thêm `isActive` và `version`.
-GET collection nhận `includeInactive=true` cho admin.
+GET collection nhận `includeInactive=true` cho admin và hỗ trợ `page`, `pageSize`.
 
 ## Booking
 
@@ -123,8 +123,8 @@ Encode ký tự `+` thành `%2B` khi truyền offset trong query, hoặc dùng t
 ```
 
 Page bắt đầu từ 1. Page size mặc định 20, tối đa 100.
-Áp dụng cho user list, directory, booking list và calendar.
-Room list tối đa 10 active rooms nên không phân trang.
+Áp dụng cho user list, directory, room list, booking list và calendar.
+Room list phân trang cả phòng active và archive.
 
 ## Errors
 
