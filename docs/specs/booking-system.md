@@ -1,7 +1,7 @@
 ---
 title: 'Meeting room booking specification'
 type: spec
-status: active
+status: implemented
 author: '@qtt-it'
 created: 2026-10-28
 updated: 2026-10-28
@@ -11,94 +11,97 @@ updated: 2026-10-28
 
 ## Context
 
-Đề DKI yêu cầu REST API quản lý phòng, đặt phòng, xem lịch và tìm phòng trống.
-Công nghệ bắt buộc là Java 17+, Spring Boot 3, PostgreSQL và Docker Compose.
+The assessment requires room management, booking, calendars and availability through a REST API.
+Required technologies are Java 17+, Spring Boot 3, PostgreSQL and Docker Compose.
 
-## Quy tắc được xác nhận
+## Confirmed rules
 
-| Chủ đề | Quy tắc |
+| Topic | Rule |
 | --- | --- |
-| Duyệt | Booking cần admin duyệt |
-| Thứ tự | Yêu cầu được duyệt thành công trước chiếm phòng |
-| Sửa/hủy | Người tạo và admin được thực hiện |
-| Số phòng | Tối đa 10 phòng đang hoạt động |
-| Lịch lặp | Có hỗ trợ |
-| Người tham gia | Mời tài khoản nhân viên cụ thể |
-| Giờ hoạt động | Thứ Hai-thứ Bảy, 09:00-18:00, giờ Việt Nam |
-| Chống trùng | Không cho hai booking đã duyệt trùng phòng và giao thời gian |
-| Tìm kiếm | Sức chứa, địa điểm, tầng, thiết bị và thời gian |
-| Auth | Đăng nhập, refresh, logout và phân quyền user/admin |
-| Xung đột | Từ chối cùng gợi ý thay thế |
+| Approval | An administrator must approve every booking |
+| Priority | The first successful approval reserves the room |
+| Edit/cancel | The organizer and administrators can perform these actions |
+| Room limit | At most ten active rooms |
+| Recurrence | Supported |
+| Participants | Invite specific employee accounts |
+| Business hours | Monday-Saturday, 09:00-18:00, Vietnam time |
+| Overlap protection | Approved occurrences cannot overlap in the same room |
+| Search | Capacity, location, floor, equipment and time |
+| Authentication | Login, refresh, logout and user/admin roles |
+| Conflicts | Reject the operation and return alternatives |
 
-Không giới hạn cứng số nhân viên ở 200. Đây là quy mô mô tả trong đề.
+The approximate scale is 200 employees. The application does not impose a hard employee limit.
 
-## Lựa chọn bổ sung cho phiên bản này
+## Additional implementation choices
 
-Những lựa chọn dưới đây cụ thể hóa các điểm đề chưa quy định.
+These choices resolve details that the assessment does not specify.
 
-- Chỉ admin tạo tài khoản nội bộ. Không có tự đăng ký hoặc khôi phục password qua email.
-- Admin được duyệt booking của chính mình.
-- Không áp dụng thời hạn báo trước khi hủy, ngoài điều kiện buổi họp chưa bắt đầu.
-- Thời gian theo phút, tối thiểu một phút và trong cùng ngày.
-- Khoảng thời gian là `[startsAt, endsAt)`. 10:00-11:00 và 11:00-12:00 không trùng.
-- Không có buffer hoặc lịch nghỉ lễ. Chủ nhật đóng cửa.
-- Lặp `daily` đếm ngày làm việc T2-T7. Lặp `weekly` giữ nguyên thứ và giờ.
-- `interval` từ 1 đến 12, `count` từ 2 đến 52. Buổi cuối phải trong 366 ngày.
-- Admin duyệt cả chuỗi. Một buổi trùng làm toàn bộ lần duyệt thất bại, chuỗi vẫn `pending`.
-- API kiểm tra xung đột với lịch đã duyệt cả khi gửi yêu cầu và khi duyệt.
-- Sửa toàn bộ chuỗi trước buổi đầu. Sửa booking đã duyệt giải phóng lịch cũ và yêu cầu duyệt lại.
-- Hủy chuỗi chỉ hủy buổi chưa bắt đầu. Giữ nguyên lịch sử và buổi đang diễn ra.
-- Thành viên tham gia không được sửa, hủy hoặc duyệt chỉ vì nhận lời mời.
-- Tính sức chứa gồm người tổ chức và tất cả người được mời, kể cả người từ chối.
-- Lời mời chung cho cả chuỗi. Không kiểm tra xung đột lịch cá nhân của người tham gia.
-- Chưa có email, thông báo đẩy, monthly recurrence hoặc chỉnh riêng một buổi trong chuỗi.
-- Không xóa vật lý phòng, tài khoản hoặc booking qua API.
+- Only administrators create internal accounts. Self-registration and email password recovery are outside this version.
+- Administrators may approve their own bookings.
+- Cancellation has no advance-notice requirement beyond a future occurrence start.
+- Times use whole minutes, with a minimum duration of one minute within one day.
+- Windows are half-open: `[startsAt, endsAt)`. 10:00-11:00 and 11:00-12:00 do not overlap.
+- There are no buffers or public-holiday rules. Sunday is closed.
+- Daily recurrence counts Monday-Saturday business days. Weekly recurrence retains the weekday and local time.
+- The interval is 1-12 and the count is 2-52. The last occurrence must end within 366 days.
+- Approval covers the entire series. One conflict leaves the whole request pending without partial reservations.
+- Submission and approval both check conflicts against approved occurrences.
+- Edits replace the entire series before its first start. Editing an approved booking releases its reservations and requires approval again.
+- Cancellation changes only occurrences that have not started. Past and ongoing occurrences retain their history.
+- An invitation alone never grants edit, cancel or approval permission.
+- Capacity includes the organizer and all invitees, including invitees who decline.
+- One invitation response applies to the whole series. Personal employee calendar conflicts are not checked.
+- Email, push notifications, monthly recurrence and single-occurrence edits are outside this version.
+- The API does not physically delete rooms, accounts or bookings.
 
-## Trạng thái và hành động
+## States and actions
 
-| Trạng thái | Hành động | Kết quả |
+| State | Action | Result |
 | --- | --- | --- |
-| pending | Admin duyệt | approved nếu cả chuỗi còn trống |
-| pending | Admin từ chối, có lý do | rejected |
-| pending | Chủ booking/admin sửa | pending, tăng version |
-| approved | Chủ booking/admin sửa trước buổi đầu | pending, tăng version, bỏ lịch duyệt cũ |
-| pending hoặc approved | Chủ booking/admin hủy | cancelled, hủy các buổi tương lai |
-| rejected hoặc cancelled | Sửa hoặc duyệt | 422 |
+| pending | Administrator approves | approved only if the entire series is available |
+| pending | Administrator rejects with a reason | rejected |
+| pending | Organizer/administrator edits | pending, version increments |
+| approved | Organizer/administrator edits before the first start | pending, version increments, previous reservations are released |
+| pending or approved | Organizer/administrator cancels | cancelled, future occurrences are canceled |
+| rejected or cancelled | Edit or approve | HTTP 422 |
 
-Mọi thay đổi booking ghi audit cùng transaction.
-Hành động sửa, duyệt, từ chối và hủy cần `version` hiện tại. Version cũ nhận `409`.
+Booking mutations record audit events in the same transaction.
+Edit, approval, rejection and cancellation require the current version.
+An outdated version returns HTTP 409.
 
-## Gợi ý
+## Recommendations
 
-API ưu tiên tối đa ba phòng khác đủ chỗ và có toàn bộ thiết bị của phòng ban đầu.
-Sau đó tìm giờ muộn hơn trong cùng ngày, theo bước 15 phút, tối đa 180 phút.
-Tổng số gợi ý tối đa năm. Mỗi gợi ý phải thỏa toàn bộ chuỗi.
+The API first proposes up to three other rooms with sufficient capacity and all original room equipment.
+It then searches later times in 15-minute steps, up to 180 minutes later on the same day.
+It returns at most five suggestions. Every suggestion must fit the entire series.
 
-Gợi ý có thể rỗng khi không còn lựa chọn phù hợp. Gợi ý không giữ phòng.
-Client gửi booking mới hoặc sửa booking rồi xin duyệt.
+The list may be empty when no suitable alternative exists.
+Suggestions do not reserve rooms.
+The client submits or edits a booking, then requests approval.
 
-## Quyền riêng tư
+## Privacy
 
-Tất cả nhân viên xem phòng và khoảng bận đã duyệt.
-Lịch công khai không chứa tiêu đề, nội dung, danh sách người tham gia hoặc người tổ chức.
-Chỉ chủ booking, người được mời và admin đọc chi tiết booking.
-User xem directory chỉ nhận tài khoản đang hoạt động và thông tin cần để mời.
+Employees can read active rooms and approved busy periods.
+The public calendar omits titles, descriptions, attendees and organizer identities.
+Only the organizer, invited employees and administrators can read booking details.
+The employee directory returns active accounts and the information needed for invitations.
 
 ## Acceptance criteria
 
-1. Hai booking pending giao lịch có thể cùng tồn tại.
-2. Duyệt đồng thời hai booking trùng phòng chỉ có một lần thành công.
-3. Duyệt chuỗi thất bại không giữ lại một phần lịch.
-4. Buổi liền kề nhau và cùng giờ ở hai phòng khác nhau đều hợp lệ.
-5. User không duyệt booking và không sửa booking của người khác.
-6. Booking ngoài T2-T7 hoặc 09:00-18:00 nhận 422.
-7. Không tạo hoặc kích hoạt phòng thứ 11.
-8. Refresh token chỉ được dùng một lần. Dùng lại thu hồi cả family.
-9. Password không xuất hiện trong API và database chỉ giữ password hash.
-10. Docker Compose khởi chạy API và PostgreSQL cùng healthcheck.
+1. Overlapping pending requests can coexist.
+2. Concurrent approval of the same room and time produces only one success.
+3. A failed series approval never retains partial reservations.
+4. Adjacent meetings and simultaneous meetings in different rooms are valid.
+5. Employees cannot approve bookings or edit another organizer's booking.
+6. Requests outside Monday-Saturday or 09:00-18:00 return HTTP 422.
+7. Creating or activating an eleventh room fails.
+8. Refresh tokens are single-use. Reuse revokes the entire family.
+9. API responses omit password hashes. The database stores password hashes only.
+10. Docker Compose starts the API and PostgreSQL with healthchecks.
 
 ## History
 
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Record confirmed requirements and implementation choices |
+| 2026-10-28 | @qtt-it | Standardize all specification prose in English |

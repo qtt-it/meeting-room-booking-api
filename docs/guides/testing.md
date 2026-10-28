@@ -11,8 +11,9 @@ updated: 2026-10-28
 
 ## Prerequisites
 
-Cần Java 17 và PostgreSQL riêng cho test.
-Test tích hợp chỉ chạy khi database tên chính xác `meeting_booking_test`, vì fixture xóa dữ liệu giữa các test.
+Use Java 17 and a dedicated PostgreSQL database.
+Integration tests require the exact database name `meeting_booking_test`.
+The fixture deletes data between tests.
 
 ## Commands
 
@@ -23,54 +24,62 @@ docker compose -f infra/compose.test.yml up -d --wait
 docker compose -f infra/compose.test.yml down
 ```
 
-Override kết nối bằng `TEST_DATABASE_URL`, `TEST_DATABASE_USERNAME`, `TEST_DATABASE_PASSWORD`.
-Mặc định dùng PostgreSQL tại localhost:55432.
-Test không dùng H2 vì H2 không kiểm tra được GiST, row lock và exclusion constraint.
+Override the connection with `TEST_DATABASE_URL`, `TEST_DATABASE_USERNAME` and `TEST_DATABASE_PASSWORD`.
+The default database endpoint is localhost:55432.
+Tests do not use H2 because it does not verify PostgreSQL GiST indexes, row locks and exclusion constraints.
 
-## Coverage theo hành vi
+## Behavioral coverage
 
-| Layer | Nội dung |
+| Layer | Coverage |
 | --- | --- |
-| Unit | Nửa khoảng thời gian, giờ hoạt động, Chủ nhật, horizon, recurrence |
-| HTTP foundation | Request ID an toàn và dọn MDC |
-| Integration | Login, refresh, logout, password change, RBAC, room limit |
-| Booking integration | Pending, approval race, rollback chuỗi, version, capacity, invitation |
-| Database | Exclusion constraint kể cả khi ghi SQL trực tiếp |
-| Container smoke | Health, login, profile và room list sau Compose startup |
-| API collection | 25 request chạy theo thứ tự trên stack Docker riêng: auth, room, recurring booking, approval, RSVP, cancellation, rejection |
+| Unit | Half-open windows, business hours, Sundays, horizon and recurrence |
+| Documentation | English language markers, composed/decomposed Unicode and local Markdown links |
+| HTTP foundation | Safe request IDs and MDC cleanup |
+| Integration | Login, refresh, logout, password change, roles and room limits |
+| Booking integration | Pending requests, approval races, atomic series rollback, versions, capacity and invitations |
+| Database | Exclusion constraint, including direct SQL writes |
+| Container smoke | Health, login, profile and room catalog after Compose startup |
+| API collection | 25 ordered requests against a disposable stack: auth, rooms, recurrence, approval, RSVP, cancellation and rejection |
 
-Tests chạy bằng Surefire cho `*Test`, Failsafe cho `*IT` khi bật profile `integration`.
-Không dùng test transaction bao ngoài request vì cần quan sát commit thật.
+Surefire runs `*Test`. Failsafe runs `*IT` when the `integration` profile is active.
+Tests do not wrap HTTP requests in an outer test transaction.
+They verify actual committed state.
 
-## Kết quả local
+## Local results
 
-Đã chạy unit và integration test trên Java 17 với PostgreSQL 14.22 tạm, vì Docker daemon local chưa chạy.
-Kết quả local: 24 unit test, 28 integration test và 25 request Bruno đều đạt.
-CI dùng PostgreSQL 17, đúng image của Compose.
-Kết quả CI và container smoke cần đọc trực tiếp tại PR, không suy luận từ unit test.
+The initial delivery passed Java 17 tests against a temporary PostgreSQL 14.22 cluster.
+The local Docker daemon was unavailable.
+The baseline passed 24 unit tests, 28 integration tests and all 25 Bruno requests.
+CI uses PostgreSQL 17, matching Compose.
+Read the current PR checks for the latest result. Unit success does not prove container startup.
 
 ## Delivery evidence
 
-[Full CI run](https://github.com/qtt-it/meeting-room-booking-api/actions/runs/40642049729) kiểm tra commit `0cac3f0`:
+[The baseline CI run](https://github.com/qtt-it/meeting-room-booking-api/actions/runs/40642049729) verifies commit `0cac3f0`:
 
-- Java 17 và PostgreSQL 17: 24 unit test và 28 integration test.
-- Build image thật, Compose startup và readiness.
-- 25 request Bruno, gồm login/refresh/logout, user, room, booking lặp, duyệt, RSVP, hủy và từ chối.
-- Test report và API collection report được giữ trong 14 ngày.
+- Java 17 and PostgreSQL 17: 24 unit tests and 28 integration tests.
+- Actual image build, Compose startup and readiness.
+- All 25 API requests, including auth, rooms, recurrence, approval, RSVP, cancellation and rejection.
+- Test reports and API collection reports retained for 14 days.
 
-Commit tài liệu sau đó cũng phải qua CI ở chính head của PR trước khi merge.
+Later changes must also pass CI at the exact PR head before merge.
 
 ## Report locations
 
-Đọc `target/surefire-reports` và `target/failsafe-reports` trong từng module.
-CI lưu report trong artifact trong 14 ngày.
-Report Bruno loại bỏ header và request/response body để tránh lưu token hoặc password.
-Job container dùng database riêng, không kết nối hệ thống bên ngoài.
-Action và CLI được pin phiên bản; Dependabot đề xuất cập nhật.
-Khi thêm endpoint hoặc rule, thêm test hồi quy và request Bruno cùng thay đổi.
+Read `target/surefire-reports` and `target/failsafe-reports` in each module.
+CI retains reports for 14 days.
+Bruno reports omit all headers and request/response bodies to avoid storing credentials.
+The container job uses a disposable database, without access to an external application database.
+Actions and the CLI use pinned revisions or versions. Dependabot proposes updates.
+Add regression tests and API requests when you change an endpoint or a rule.
+
+DocumentationTest scans Markdown across the repository, including README files and planning records.
+Its language check detects accented markers, including decomposed Unicode.
+Editorial review is still required for unaccented prose.
 
 ## History
 
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial testing guide |
+| 2026-10-28 | @qtt-it | Standardize all test guidance in English |
