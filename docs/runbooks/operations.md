@@ -11,43 +11,43 @@ updated: 2026-10-28
 
 ## Configuration
 
-| Biến | Mục đích |
+| Variable | Purpose |
 | --- | --- |
-| DATABASE_URL | JDBC URL khi chạy app trực tiếp |
-| DATABASE_NAME | Tên database cho Compose |
-| DATABASE_USERNAME, DATABASE_PASSWORD | Kết nối database |
-| JWT_SECRET | Ít nhất 32 byte UTF-8, cùng giá trị giữa các instance |
-| BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD | Chỉ tạo admin khi database chưa có user |
-| DOCS_ENABLED | Tắt Swagger ở môi trường không công khai docs |
-| CORS_ALLOWED_ORIGINS | Danh sách origin phân cách bằng dấu phẩy |
-| API_PORT, DATABASE_PORT | Port host của Compose |
+| DATABASE_URL | JDBC URL for direct application startup |
+| DATABASE_NAME | Compose database name |
+| DATABASE_USERNAME, DATABASE_PASSWORD | Database credentials |
+| JWT_SECRET | At least 32 UTF-8 bytes, shared across API instances |
+| BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD | Create an administrator only when the account catalog is empty |
+| DOCS_ENABLED | Disable Swagger when API documentation must not be public |
+| CORS_ALLOWED_ORIGINS | Comma-separated allowed origins |
+| API_PORT, DATABASE_PORT | Compose host ports |
 
-Compose có giá trị demo để `docker compose up` chạy trực tiếp.
-File `.env` nằm trong gitignore.
-Dùng secret manager, mật khẩu riêng và TLS khi triển khai ra ngoài local.
-JWT secret có thể tạo bằng `openssl rand -hex 32`.
+Compose provides demonstration defaults for local startup.
+Git ignores `.env`.
+Use a secret manager, private credentials and TLS outside local development.
+Generate a signing secret with `openssl rand -hex 32`.
 
-Bootstrap không ghi đè password đã tồn tại.
-Sau lần khởi tạo, bỏ bootstrap password khỏi cấu hình triển khai.
+Bootstrap never replaces an existing password.
+Remove bootstrap credentials from deployment configuration after initial account creation.
 
-## Health và logs
+## Health and logs
 
 - Liveness: `/actuator/health/liveness`.
-- Readiness: `/actuator/health/readiness`, gồm kết nối database.
-- Chỉ admin truy cập `/actuator/prometheus` và `/actuator/info`.
-- Logs dạng ECS JSON ra stdout, có requestId.
-- Không ghi password, access token hoặc refresh token vào log ứng dụng.
-- Không bật log request body khi xử lý dữ liệu thật.
+- Readiness: `/actuator/health/readiness`, including database connectivity.
+- Only administrators access `/actuator/prometheus` and `/actuator/info`.
+- ECS JSON logs go to stdout and include requestId.
+- Never log passwords, access tokens or refresh tokens.
+- Never enable request-body diagnostics for real data.
 
-Bộ Bruno tạo tài khoản, phòng và booking; chỉ chạy trên database demo tạm.
-Không sử dụng collection như healthcheck trên production.
+The Bruno collection creates accounts, rooms and bookings.
+Run it only against a disposable development database, never as a production healthcheck.
 
-Login rate limit là 20 request/IP/phút trong một instance.
-Khi có reverse proxy hoặc nhiều replica, cấu hình giới hạn tại ingress.
-Ingress cần giới hạn JSON request body, timeout và kết nối đồng thời theo tải triển khai.
-App không tự tin header Forwarded/X-Forwarded-For của client.
+The login limit is 20 attempts per IP per minute in one API instance.
+Configure ingress limits for a reverse proxy or multiple replicas.
+Ingress must bound JSON body sizes, request timeouts and concurrent connections.
+The application does not trust client-supplied Forwarded or X-Forwarded-For headers.
 
-## Khởi chạy và dừng
+## Startup and shutdown
 
 ```bash
 docker compose up --build -d --wait
@@ -56,49 +56,53 @@ docker compose logs --tail 100 api
 docker compose down
 ```
 
-`down` giữ volume. Không dùng `down -v` với dữ liệu cần giữ.
-Container API chạy non-root, filesystem read-only, chỉ /tmp được ghi.
-App shutdown có thời gian để đóng connection và hoàn tất request.
+The `down` command retains the volume. Never use `down -v` for data that must survive.
+The API runs as a non-root user with a read-only filesystem. Only /tmp is writable.
+Graceful shutdown allows requests and connections to finish.
 
-## Backup và restore
+## Backup and restore
 
-Dùng pg_dump định kỳ và thử restore trên database riêng.
-Lệnh dưới ghi vào file backup được chọn rõ ràng.
+Schedule pg_dump backups and verify restoration into a separate database.
+This command writes to an explicit backup file.
+Choose a new filename when an earlier backup must be retained.
 
 ```bash
 mkdir -p .local/backups
 docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > .local/backups/meeting-booking.dump
 ```
 
-Restore phải dùng một database rỗng riêng. Kiểm tra login, room count và exclusion constraint sau restore.
-Không ghi đè database đang hoạt động khi chưa có kế hoạch chuyển đổi.
+Restore only into a separate empty database.
+Verify authentication, room counts and exclusion constraints after restoration.
+Never overwrite the active database without an approved recovery plan.
 
-## Deploy và rollback
+## Deployment and rollback
 
-1. Chạy CI, container smoke và bộ 25 request Bruno trên database tạm.
-2. Chụp backup.
-3. Chạy migration với role migrator.
-4. Chạy image mới và chờ readiness.
-5. Kiểm tra login, tìm phòng và duyệt booking.
-6. Nếu lỗi app, chuyển về image trước khi schema còn tương thích.
-7. Nếu lỗi schema, dùng migration bù hoặc restore, theo thay đổi cụ thể.
+1. Run CI, container smoke and the API collection against a disposable database.
+2. Create a backup.
+3. Run migrations with the migration role.
+4. Start the new image and wait for readiness.
+5. Verify authentication, availability and booking approval.
+6. For an application fault, restore the previous image while the schema remains compatible.
+7. For a schema fault, use a reviewed compensating migration or restore according to the recovery plan.
 
-Compose phục vụ local và đánh giá. Repo chưa tạo tài nguyên AWS, DNS hoặc chứng chỉ.
-Trước triển khai thật, chọn môi trường, hostname, secret manager, backup và ingress TLS.
+Compose supports local development and assessment.
+The repository does not provision cloud resources, DNS or certificates.
+Before production deployment, select the environment, hostname, secret manager, backup policy and TLS ingress.
 
-## Sự cố thường gặp
+## Troubleshooting
 
-| Hiện tượng | Kiểm tra |
+| Symptom | Check |
 | --- | --- |
-| JWT_SECRET không hợp lệ | Độ dài ít nhất 32 byte |
-| DB khởi động nhưng API chưa ready | Log Flyway, thông tin kết nối, quyền btree_gist |
-| Đổi bootstrap password không đổi login | Tài khoản tồn tại, dùng endpoint đổi password |
-| 409 lúc duyệt | Yêu cầu khác đã chiếm lịch hoặc version đã đổi |
-| 422 lịch lặp | Chủ nhật, giờ ngoài quy định hoặc quá horizon |
-| Login 429 sau proxy | Nhiều client có cùng remote address, giới hạn cần đặt tại ingress |
+| Invalid JWT_SECRET | At least 32 UTF-8 bytes |
+| Database starts but the API is not ready | Flyway logs, connection configuration and btree_gist permissions |
+| A changed bootstrap password does not change login | The account already exists. Use the password endpoint |
+| Approval returns 409 | Another approval reserved the room, or the version changed |
+| Recurrence returns 422 | Sunday, invalid business hours or the booking horizon |
+| Login returns 429 behind a proxy | Clients share one remote address. Apply limits at ingress |
 
 ## History
 
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial operations runbook |
+| 2026-10-28 | @qtt-it | Standardize all operational guidance in English |
