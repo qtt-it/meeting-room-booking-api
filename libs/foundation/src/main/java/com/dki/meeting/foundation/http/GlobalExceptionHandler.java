@@ -21,8 +21,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AppException.class)
   ResponseEntity<?> application(AppException ex) {
-    log.warn("Request rejected. code={} status={}", ex.code(), ex.status());
-    return response(ex.status(), ex.code(), ex.getMessage(), ex.details());
+    log.warn("Request rejected. code={} status={}", ex.code(), status(ex));
+    return response(status(ex), ex.code(), ex.getMessage(), ex.details());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -64,6 +64,17 @@ public class GlobalExceptionHandler {
           null);
     log.error("Unexpected request failure.", ex);
     return response(500, "Internal.Unexpected", "An unexpected error occurred", null);
+  }
+
+  private int status(AppException error) {
+    return switch (error.kind()) {
+      case INVALID_REQUEST -> 400;
+      case UNAUTHENTICATED -> 401;
+      case FORBIDDEN -> 403;
+      case NOT_FOUND -> 404;
+      case CONFLICT -> 409;
+      case RULE_VIOLATION -> 422;
+    };
   }
 
   private ResponseEntity<?> response(int status, String code, String message, Object details) {

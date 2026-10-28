@@ -1,6 +1,6 @@
 package com.dki.meeting.booking.infra.db;
 
-import com.dki.meeting.room.application.RoomUsage;
+import com.dki.meeting.room.application.port.out.RoomUsage;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;

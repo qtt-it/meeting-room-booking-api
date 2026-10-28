@@ -2,7 +2,7 @@ package com.dki.meeting.config;
 
 import com.dki.meeting.foundation.*;
 import com.dki.meeting.foundation.http.JsonSecurityErrors;
-import com.dki.meeting.identity.application.IdentityService;
+import com.dki.meeting.identity.application.service.IdentityService;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import java.util.*;

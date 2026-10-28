@@ -16,6 +16,8 @@ updated: 2026-10-28
 | [Database](database.md) | Tables, indexes, locks and migrations |
 | [API](api.md) | Endpoints, permissions, payloads and errors |
 | [Decisions](decisions/ADR-001-backend-design.md) | Choices, alternatives and trade-offs |
+| [Clean and hexagonal boundaries](decisions/ADR-002-clean-hexagonal-boundaries.md) | Core independence, ports, context and transaction decorators |
+| [Design patterns](reference/design-patterns.md) | Concrete patterns and their implementation paths |
 | [Testing](guides/testing.md) | Unit, database integration and concurrency |
 | [Operations](runbooks/operations.md) | Configuration, health, backup and rollback |
 | [Conventions](reference/engineering-conventions.md) | Engineering and infrastructure conventions |
@@ -27,3 +29,4 @@ updated: 2026-10-28
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial documentation |
+| 2026-10-28 | @qtt-it | Index the architecture decision and implemented patterns |

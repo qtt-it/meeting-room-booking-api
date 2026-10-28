@@ -1,6 +1,6 @@
 package com.dki.meeting.identity.infra.http;
 
-import com.dki.meeting.identity.application.AccessTokens;
+import com.dki.meeting.identity.application.port.out.AccessTokens;
 import com.dki.meeting.identity.domain.UserAccount;
 import java.time.Clock;
 import java.util.List;

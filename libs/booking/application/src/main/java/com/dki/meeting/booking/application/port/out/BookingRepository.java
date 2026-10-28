@@ -1,5 +1,6 @@
-package com.dki.meeting.booking.application;
+package com.dki.meeting.booking.application.port.out;
 
+import com.dki.meeting.booking.application.model.BusySlot;
 import com.dki.meeting.booking.domain.*;
 import com.dki.meeting.foundation.*;
 import java.time.Instant;
@@ -23,6 +24,4 @@ public interface BookingRepository {
   boolean respond(UUID bookingId, UUID userId, String response);
 
   void audit(UUID bookingId, UUID actor, String action, String details);
-
-  record BusySlot(UUID roomId, Instant startsAt, Instant endsAt) {}
 }

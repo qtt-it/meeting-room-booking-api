@@ -1,38 +1,16 @@
-package com.dki.meeting.identity.application;
+package com.dki.meeting.identity.application.service;
 
 import com.dki.meeting.foundation.*;
+import com.dki.meeting.identity.application.RefreshReuseException;
+import com.dki.meeting.identity.application.model.IdentityModels.*;
+import com.dki.meeting.identity.application.port.out.*;
 import com.dki.meeting.identity.domain.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
 import java.util.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class IdentityService {
-  public record UserView(
-      UUID id,
-      String email,
-      String displayName,
-      String role,
-      boolean isActive,
-      long version,
-      Instant createdAt) {
-    static UserView from(UserAccount u) {
-      return new UserView(
-          u.id(), u.email(), u.displayName(), u.role(), u.isActive(), u.version(), u.createdAt());
-    }
-  }
-
-  public record Tokens(
-      String accessToken, String refreshToken, String tokenType, long expiresIn, UserView user) {
-    @Override
-    public String toString() {
-      return "Tokens[redacted]";
-    }
-  }
-
   private final IdentityRepository repo;
   private final PasswordHasher passwords;
   private final AccessTokens tokens;
@@ -55,7 +33,6 @@ public class IdentityService {
     this.dummyHash = passwords.hash(UUID.randomUUID().toString());
   }
 
-  @Transactional
   public Tokens login(String email, String password) {
     var user = repo.byEmail(normalizeEmail(email));
     boolean valid =
@@ -67,7 +44,6 @@ public class IdentityService {
     return issue(user.get(), family);
   }
 
-  @Transactional(noRollbackFor = RefreshReuseException.class)
   public Tokens refresh(String raw) {
     String hash = hashToken(raw);
     RefreshSession hint = repo.session(hash, false).orElseThrow(AppException::unauthorized);
@@ -86,7 +62,6 @@ public class IdentityService {
     return issue(user, session.familyId());
   }
 
-  @Transactional
   public void logout(String raw) {
     repo.session(hashToken(raw), false)
         .ifPresent(
@@ -124,14 +99,12 @@ public class IdentityService {
         found.items().stream().map(UserView::from).toList(), found.totalItems(), page, size);
   }
 
-  @Transactional
   public UserView create(Actor actor, String email, String name, String password, String role) {
     actor.requireAdmin();
     repo.lockCatalog();
     return insert(email, name, password, role, actor.id());
   }
 
-  @Transactional
   public void bootstrap(String email, String password) {
     if (email == null || email.isBlank() || password == null || password.isBlank()) return;
     repo.lockCatalog();
@@ -159,7 +132,6 @@ public class IdentityService {
     return UserView.from(u);
   }
 
-  @Transactional
   public UserView update(
       Actor actor, UUID id, String name, String role, boolean active, long version) {
     actor.requireAdmin();
@@ -179,7 +151,6 @@ public class IdentityService {
     return UserView.from(repo.byId(id).orElseThrow());
   }
 
-  @Transactional
   public void changePassword(Actor actor, String current, String replacement) {
     UserAccount user = active(actor.id());
     if (!passwords.matches(current, user.passwordHash())) throw AppException.unauthorized();

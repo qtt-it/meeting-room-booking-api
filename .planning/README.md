@@ -11,6 +11,8 @@ Each story records acceptance criteria, implementation tasks, verification and r
 | [MB-005](backlog/stories/MB-005.md) | feature/MB-005-booking-approval | Approval and cancellation | [#13](https://github.com/qtt-it/meeting-room-booking-api/pull/13) |
 | [MB-006](backlog/stories/MB-006.md) | feature/MB-006-invitations-and-availability | Invitations and alternative rooms | [#14](https://github.com/qtt-it/meeting-room-booking-api/pull/14) |
 | [MB-007](backlog/stories/MB-007.md) | feature/MB-007-devops-and-documentation | DevOps and handoff documentation | [#15](https://github.com/qtt-it/meeting-room-booking-api/pull/15) |
+| [MB-008](backlog/stories/MB-008.md) | docs/MB-008-english-documentation | English documentation and regression checks | [#28](https://github.com/qtt-it/meeting-room-booking-api/pull/28) |
+| [MB-009](backlog/stories/MB-009.md) | feature/MB-009-clean-hexagonal | Clean and hexagonal architecture with framework adapters | Pending |
 
 Integrate MB-001 through MB-007 in order.
 Each feature targets develop after its prerequisite is merged.

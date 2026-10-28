@@ -1,4 +1,4 @@
-package com.dki.meeting.identity.application;
+package com.dki.meeting.identity.application.port.out;
 
 import com.dki.meeting.identity.domain.UserAccount;
 
