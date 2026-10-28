@@ -51,6 +51,19 @@ Kết quả CI và container smoke cần đọc trực tiếp tại PR, không s
 
 ## Reports
 
+## Delivery evidence
+
+[Full CI run](https://github.com/qtt-it/meeting-room-booking-api/actions/runs/40642049729) kiểm tra commit `0cac3f0`:
+
+- Java 17 và PostgreSQL 17: 24 unit test và 28 integration test.
+- Build image thật, Compose startup và readiness.
+- 25 request Bruno, gồm login/refresh/logout, user, room, booking lặp, duyệt, RSVP, hủy và từ chối.
+- Test report và API collection report được giữ trong 14 ngày.
+
+Commit tài liệu sau đó cũng phải qua CI ở chính head của PR trước khi merge.
+
+## Report locations
+
 Đọc `target/surefire-reports` và `target/failsafe-reports` trong từng module.
 CI lưu report trong artifact trong 14 ngày.
 Report Bruno loại bỏ header và request/response body để tránh lưu token hoặc password.
