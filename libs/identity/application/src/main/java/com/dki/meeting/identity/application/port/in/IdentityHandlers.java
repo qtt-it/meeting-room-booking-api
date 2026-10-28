@@ -3,7 +3,6 @@ package com.dki.meeting.identity.application.port.in;
 import com.dki.meeting.foundation.*;
 import com.dki.meeting.identity.application.model.*;
 import com.dki.meeting.identity.application.model.IdentityModels.*;
-import com.dki.meeting.identity.application.port.out.*;
 import java.util.*;
 
 public record IdentityHandlers(

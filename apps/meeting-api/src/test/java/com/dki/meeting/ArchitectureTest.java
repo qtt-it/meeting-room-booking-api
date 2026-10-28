@@ -79,7 +79,8 @@ class ArchitectureTest {
           .resideInAPackage("..application.port.in..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("..application.service..", "..application.usecase..");
+          .resideInAnyPackage(
+              "..application.service..", "..application.usecase..", "..application.port.out..");
 
   @ArchTest
   static final ArchRule useCasesExposeOneOperation =

@@ -1,5 +1,6 @@
 package com.dki.meeting.booking.infra.db;
 
+import com.dki.meeting.booking.application.model.BusySlot;
 import com.dki.meeting.booking.application.port.out.BookingRepository;
 import com.dki.meeting.booking.domain.*;
 import com.dki.meeting.booking.domain.Booking.*;

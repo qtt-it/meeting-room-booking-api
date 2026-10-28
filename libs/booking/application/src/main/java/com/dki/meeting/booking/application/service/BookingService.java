@@ -1,6 +1,7 @@
 package com.dki.meeting.booking.application.service;
 
 import com.dki.meeting.booking.application.model.BookingModels.*;
+import com.dki.meeting.booking.application.model.BusySlot;
 import com.dki.meeting.booking.application.model.RoomSummary;
 import com.dki.meeting.booking.application.port.out.*;
 import com.dki.meeting.booking.domain.*;
@@ -148,8 +149,7 @@ public class BookingService {
     return find(id, false);
   }
 
-  public PageResult<BookingRepository.BusySlot> calendar(
-      UUID room, Instant from, Instant to, int page, int size) {
+  public PageResult<BusySlot> calendar(UUID room, Instant from, Instant to, int page, int size) {
     PageResult.offset(page, size);
     rooms.find(room);
     TimeWindow range = new TimeWindow(from, to);
