@@ -20,6 +20,8 @@ public class OpenApiConfiguration {
 
   @Bean
   OpenAPI api() {
+    org.springdoc.core.utils.SpringDocUtils.getConfig()
+        .addRequestWrapperToIgnore(com.dki.meeting.foundation.OperationContext.class);
     return new OpenAPI()
         .info(
             new Info()

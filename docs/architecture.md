@@ -31,10 +31,28 @@ Domain code does not import JDBC, Spring MVC or database adapters.
 ## Request flow
 
 Security validates the JWT, reads the current account and creates an Actor.
-Controllers validate request shape and delegate to application services.
-Services check authorization, execute domain rules and persist changes in transactions.
-Adapters execute parameterized SQL. One exception handler records failures and returns the error envelope.
+Controllers validate request shape and call typed input ports.
+CurrentOperation resolves the verified actor and request ID at the HTTP boundary.
+Use cases receive that context explicitly and return application views.
+Framework-free services coordinate workflows through output ports.
+Domain factories and aggregate methods enforce booking state rules.
+TransactionalUseCase decorates each handler in the composition root.
+Adapters execute parameterized SQL. The central handler maps failure kinds to HTTP responses.
 An injected Clock makes time rules deterministic in tests.
+
+See [ADR-002](decisions/ADR-002-clean-hexagonal-boundaries.md) for dependency rules, transaction policy and Java package conventions.
+See the [pattern catalog](reference/design-patterns.md) for concrete classes and design trade-offs.
+
+## Enforced boundaries
+
+ArchitectureTest verifies that application and domain classes do not depend on Spring, JDBC, Jackson or adapters.
+Each feature core owns its ports and cannot import another feature.
+Controllers depend on input contracts, not service or use-case implementations.
+Every public use-case method is named execute.
+The module graph must remain acyclic.
+
+The composition root binds recurrence strategies and JDBC adapters.
+Cross-module adapters convert room and employee information into consumer-owned contracts.
 
 ## Concurrent approvals
 
@@ -84,3 +102,4 @@ The query count stays constant as the page grows.
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial architecture |
+| 2026-10-28 | @qtt-it | Enforce clean and hexagonal boundaries with explicit use-case decorators |

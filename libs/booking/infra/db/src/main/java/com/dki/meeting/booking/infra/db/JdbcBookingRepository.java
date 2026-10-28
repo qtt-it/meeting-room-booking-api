@@ -1,6 +1,6 @@
 package com.dki.meeting.booking.infra.db;
 
-import com.dki.meeting.booking.application.BookingRepository;
+import com.dki.meeting.booking.application.port.out.BookingRepository;
 import com.dki.meeting.booking.domain.*;
 import com.dki.meeting.booking.domain.Booking.*;
 import com.dki.meeting.foundation.*;

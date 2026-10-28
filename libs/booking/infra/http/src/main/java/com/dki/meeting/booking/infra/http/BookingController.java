@@ -1,9 +1,12 @@
 package com.dki.meeting.booking.infra.http;
 
-import com.dki.meeting.booking.application.BookingService;
+import com.dki.meeting.booking.application.model.*;
+import com.dki.meeting.booking.application.port.in.BookingHandlers;
 import com.dki.meeting.booking.domain.*;
 import com.dki.meeting.foundation.*;
+import com.dki.meeting.foundation.http.AdminOnly;
 import com.dki.meeting.foundation.http.ApiResponse;
+import com.dki.meeting.foundation.http.CurrentOperation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
@@ -14,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 public class BookingController {
-  private final BookingService service;
+  private final BookingHandlers handlers;
 
-  public BookingController(BookingService service) {
-    this.service = service;
+  public BookingController(BookingHandlers handlers) {
+    this.handlers = handlers;
   }
 
   public record RecurrenceInput(
@@ -38,8 +41,8 @@ public class BookingController {
       @Valid RecurrenceInput recurrence,
       @NotNull @Size(max = 199) List<@NotNull UUID> attendeeIds,
       @PositiveOrZero Long version) {
-    BookingService.Input input() {
-      return new BookingService.Input(
+    com.dki.meeting.booking.application.model.BookingModels.Input input() {
+      return new com.dki.meeting.booking.application.model.BookingModels.Input(
           roomId,
           title,
           description,
@@ -55,72 +58,105 @@ public class BookingController {
       @NotNull @Pattern(regexp = "accepted|declined") String response) {}
 
   @PostMapping("/bookings")
-  public ResponseEntity<?> create(@Valid @RequestBody BookingInput r) {
-    var b = service.create(SecurityActor.current(), r.input());
+  public ResponseEntity<?> create(
+      @CurrentOperation OperationContext context, @Valid @RequestBody BookingInput r) {
+    var b = handlers.create().execute(context, r.input());
     return ResponseEntity.created(java.net.URI.create("/api/v1/bookings/" + b.id()))
         .body(ApiResponse.ok(b, "Booking submitted for approval"));
   }
 
   @PutMapping("/bookings/{id}")
-  public ApiResponse<?> update(@PathVariable UUID id, @Valid @RequestBody BookingInput r) {
+  public ApiResponse<?> update(
+      @CurrentOperation OperationContext context,
+      @PathVariable UUID id,
+      @Valid @RequestBody BookingInput r) {
     if (r.version() == null)
-      throw new AppException(400, "Validation.InvalidRequest", "version is required");
+      throw new AppException(
+          FailureKind.INVALID_REQUEST, "Validation.InvalidRequest", "version is required");
     return ApiResponse.ok(
-        service.update(SecurityActor.current(), id, r.input(), r.version()),
+        handlers.update().execute(context, new BookingCommands.Update(id, r.input(), r.version())),
         "Booking updated and submitted for approval");
   }
 
   @GetMapping("/bookings/{id}")
-  public ApiResponse<?> get(@PathVariable UUID id) {
-    return ApiResponse.ok(service.get(SecurityActor.current(), id), "Retrieved successfully");
+  public ApiResponse<?> get(@CurrentOperation OperationContext context, @PathVariable UUID id) {
+    return ApiResponse.ok(handlers.get().execute(context, id), "Retrieved successfully");
   }
 
   @GetMapping("/bookings")
   public ApiResponse<?> list(
+      @CurrentOperation OperationContext context,
       @RequestParam(defaultValue = "mine") String scope,
       @RequestParam(defaultValue = "") String status,
       @RequestParam(defaultValue = "1") int page,
       @RequestParam(defaultValue = "20") int pageSize) {
-    return ApiResponse.page(service.list(SecurityActor.current(), scope, status, page, pageSize));
+    return ApiResponse.page(
+        handlers.list().execute(context, new BookingCommands.Page(scope, status, page, pageSize)));
   }
 
+  @AdminOnly
   @PostMapping("/bookings/{id}/approval")
-  public ApiResponse<?> approve(@PathVariable UUID id, @Valid @RequestBody Decision r) {
+  public ApiResponse<?> approve(
+      @CurrentOperation OperationContext context,
+      @PathVariable UUID id,
+      @Valid @RequestBody Decision r) {
     return ApiResponse.ok(
-        service.approve(SecurityActor.current(), id, r.version()), "Booking approved");
+        handlers.approve().execute(context, new BookingCommands.Decision(id, r.version(), null)),
+        "Booking approved");
   }
 
+  @AdminOnly
   @PostMapping("/bookings/{id}/rejection")
-  public ApiResponse<?> reject(@PathVariable UUID id, @Valid @RequestBody Decision r) {
+  public ApiResponse<?> reject(
+      @CurrentOperation OperationContext context,
+      @PathVariable UUID id,
+      @Valid @RequestBody Decision r) {
     return ApiResponse.ok(
-        service.reject(SecurityActor.current(), id, r.version(), r.reason()), "Booking rejected");
+        handlers
+            .reject()
+            .execute(context, new BookingCommands.Decision(id, r.version(), r.reason())),
+        "Booking rejected");
   }
 
   @PostMapping("/bookings/{id}/cancellation")
-  public ApiResponse<?> cancel(@PathVariable UUID id, @Valid @RequestBody Decision r) {
+  public ApiResponse<?> cancel(
+      @CurrentOperation OperationContext context,
+      @PathVariable UUID id,
+      @Valid @RequestBody Decision r) {
     return ApiResponse.ok(
-        service.cancel(SecurityActor.current(), id, r.version(), r.reason()),
+        handlers
+            .cancel()
+            .execute(context, new BookingCommands.Decision(id, r.version(), r.reason())),
         "Future occurrences canceled");
   }
 
   @PutMapping("/bookings/{id}/invitation-response")
-  public ApiResponse<?> respond(@PathVariable UUID id, @Valid @RequestBody InvitationResponse r) {
+  public ApiResponse<?> respond(
+      @CurrentOperation OperationContext context,
+      @PathVariable UUID id,
+      @Valid @RequestBody InvitationResponse r) {
     return ApiResponse.ok(
-        service.respond(SecurityActor.current(), id, r.response()), "Invitation response recorded");
+        handlers.respond().execute(context, new BookingCommands.Respond(id, r.response())),
+        "Invitation response recorded");
   }
 
   @GetMapping("/rooms/{id}/calendar")
   public ApiResponse<?> calendar(
+      @CurrentOperation OperationContext context,
       @PathVariable UUID id,
       @RequestParam Instant from,
       @RequestParam Instant to,
       @RequestParam(defaultValue = "1") int page,
       @RequestParam(defaultValue = "20") int pageSize) {
-    return ApiResponse.page(service.calendar(id, from, to, page, pageSize));
+    return ApiResponse.page(
+        handlers
+            .calendar()
+            .execute(context, new BookingCommands.Calendar(id, from, to, page, pageSize)));
   }
 
   @GetMapping("/rooms/availability")
   public ApiResponse<?> available(
+      @CurrentOperation OperationContext context,
       @RequestParam Instant startsAt,
       @RequestParam Instant endsAt,
       @RequestParam(defaultValue = "1") int minCapacity,
@@ -129,13 +165,12 @@ public class BookingController {
       @RequestParam(defaultValue = "") @Size(max = 30)
           List<@NotBlank @Size(max = 50) String> equipment) {
     return ApiResponse.ok(
-        service.available(
-            SecurityActor.current(),
-            new TimeWindow(startsAt, endsAt),
-            minCapacity,
-            location,
-            floor,
-            equipment),
+        handlers
+            .available()
+            .execute(
+                context,
+                new BookingCommands.Availability(
+                    new TimeWindow(startsAt, endsAt), minCapacity, location, floor, equipment)),
         "Retrieved successfully");
   }
 }

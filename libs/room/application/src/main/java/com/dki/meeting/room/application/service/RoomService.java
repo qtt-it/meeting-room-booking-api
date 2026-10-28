@@ -1,22 +1,14 @@
-package com.dki.meeting.room.application;
+package com.dki.meeting.room.application.service;
 
 import com.dki.meeting.foundation.*;
+import com.dki.meeting.room.application.RoomView;
+import com.dki.meeting.room.application.model.RoomCommands.Input;
+import com.dki.meeting.room.application.port.out.*;
 import com.dki.meeting.room.domain.Room;
 import java.time.*;
 import java.util.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class RoomService {
-  public record Input(
-      String name,
-      String description,
-      String location,
-      String floor,
-      int capacity,
-      List<String> equipment) {}
-
   private final RoomRepository repo;
   private final Clock clock;
   private final AuditTrail audit;
@@ -29,20 +21,22 @@ public class RoomService {
     this.usage = List.copyOf(usage);
   }
 
-  public List<RoomView> list(Actor actor, boolean includeInactive) {
-    if (includeInactive) actor.requireAdmin();
-    return repo.list(includeInactive).stream().map(RoomView::from).toList();
+  public List<RoomView> activeRooms() {
+    return repo.list(false).stream().map(RoomView::from).toList();
   }
 
-  @Transactional(
-      readOnly = true,
-      isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
   public PageResult<RoomView> catalog(Actor actor, boolean includeInactive, int page, int size) {
     PageResult.offset(page, size);
     if (includeInactive) actor.requireAdmin();
     var result = repo.page(includeInactive, page, size);
     return new PageResult<>(
         result.items().stream().map(RoomView::from).toList(), result.totalItems(), page, size);
+  }
+
+  public RoomView getForActor(Actor actor, UUID id) {
+    var room = get(id);
+    if (!room.isActive()) actor.requireAdmin();
+    return room;
   }
 
   public RoomView get(UUID id) {
@@ -55,7 +49,6 @@ public class RoomService {
     return RoomView.from(r);
   }
 
-  @Transactional
   public RoomView create(Actor actor, Input input) {
     actor.requireAdmin();
     repo.lockCatalog();
@@ -69,7 +62,6 @@ public class RoomService {
     return get(r.id());
   }
 
-  @Transactional
   public RoomView update(Actor actor, UUID id, Input input, boolean active, long version) {
     actor.requireAdmin();
     repo.lockCatalog();

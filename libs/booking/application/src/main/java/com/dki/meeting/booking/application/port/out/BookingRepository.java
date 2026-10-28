@@ -1,4 +1,4 @@
-package com.dki.meeting.booking.application;
+package com.dki.meeting.booking.application.port.out;
 
 import com.dki.meeting.booking.domain.*;
 import com.dki.meeting.foundation.*;

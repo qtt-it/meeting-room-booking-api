@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.dki.meeting.foundation.*;
+import com.dki.meeting.room.application.port.out.RoomRepository;
+import com.dki.meeting.room.application.port.out.RoomUsage;
+import com.dki.meeting.room.application.service.RoomService;
 import com.dki.meeting.room.domain.Room;
 import java.time.*;
 import java.util.*;
@@ -13,8 +16,9 @@ class RoomServiceTest {
   private final RoomRepository repo = mock(RoomRepository.class);
   private final Clock clock = Clock.fixed(Instant.parse("2026-10-28T00:00:00Z"), ZoneOffset.UTC);
   private final Actor admin = new Actor(UUID.randomUUID(), "admin");
-  private final RoomService.Input input =
-      new RoomService.Input("Room", null, "HQ", "2", 10, List.of("projector"));
+  private final com.dki.meeting.room.application.model.RoomCommands.Input input =
+      new com.dki.meeting.room.application.model.RoomCommands.Input(
+          "Room", null, "HQ", "2", 10, List.of("projector"));
 
   @Test
   void deniesEmployeesBeforeReadingCatalog() {

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.dki.meeting.foundation.AppException;
 import java.time.*;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class MeetingPolicyTest {
@@ -126,5 +127,22 @@ class MeetingPolicyTest {
   @Test
   void rejectsUnsupportedRecurrence() {
     assertThatThrownBy(() -> new Recurrence("monthly", 1, 3)).isInstanceOf(AppException.class);
+  }
+
+  @Test
+  void rejectsDuplicateStrategyRegistrations() {
+    assertThatThrownBy(
+            () ->
+                new MeetingPolicy(
+                    List.of(new DailyRecurrenceStrategy(), new DailyRecurrenceStrategy())))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Duplicate recurrence strategy");
+  }
+
+  @Test
+  void rejectsIncompleteStrategyRegistrations() {
+    assertThatThrownBy(() -> new MeetingPolicy(List.of(new DailyRecurrenceStrategy())))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Daily and weekly strategies are required");
   }
 }

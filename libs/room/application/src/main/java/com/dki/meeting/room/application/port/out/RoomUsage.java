@@ -1,4 +1,4 @@
-package com.dki.meeting.room.application;
+package com.dki.meeting.room.application.port.out;
 
 import java.time.Instant;
 import java.util.UUID;

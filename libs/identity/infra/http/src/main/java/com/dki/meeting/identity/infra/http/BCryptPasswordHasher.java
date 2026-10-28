@@ -1,7 +1,7 @@
 package com.dki.meeting.identity.infra.http;
 
 import com.dki.meeting.foundation.AppException;
-import com.dki.meeting.identity.application.PasswordHasher;
+import com.dki.meeting.identity.application.port.out.PasswordHasher;
 import java.nio.charset.StandardCharsets;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;

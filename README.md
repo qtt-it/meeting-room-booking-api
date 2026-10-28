@@ -62,6 +62,10 @@ tools/bruno/            Versioned API requests
 ```
 
 Maven builds five modules. Each feature uses separate source roots for its architectural layers.
+The domain and application core do not depend on Spring or JDBC.
+Typed use cases expose input ports. Transaction decorators, context annotations and integration adapters sit outside the core.
+ArchUnit tests enforce these boundaries.
+See the [pattern catalog](docs/reference/design-patterns.md) and [architecture decision](docs/decisions/ADR-002-clean-hexagonal-boundaries.md).
 
 ## Local development
 

@@ -3,7 +3,9 @@ package com.dki.meeting;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
-import com.dki.meeting.identity.application.IdentityService;
+import com.dki.meeting.foundation.OperationContext;
+import com.dki.meeting.identity.application.model.IdentityCommands;
+import com.dki.meeting.identity.application.port.in.IdentityHandlers;
 import com.fasterxml.jackson.databind.*;
 import java.time.*;
 import java.util.*;
@@ -32,7 +34,7 @@ abstract class ApiTestSupport {
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
   @Autowired JdbcTemplate jdbc;
-  @Autowired IdentityService identity;
+  @Autowired IdentityHandlers identity;
   protected String admin;
   protected static final String PASSWORD = "LocalTest!2026Pass";
 
@@ -47,7 +49,11 @@ abstract class ApiTestSupport {
             "select tablename from pg_tables where schemaname='public' and tablename in ('activity_audit','booking_audit','booking_attendee','booking_occurrence','booking','room','refresh_session','refresh_family','user_account')",
             String.class);
     jdbc.execute("truncate " + String.join(",", tables) + " cascade");
-    identity.bootstrap("admin@example.com", PASSWORD);
+    identity
+        .bootstrap()
+        .execute(
+            OperationContext.system(),
+            new IdentityCommands.Bootstrap("admin@example.com", PASSWORD));
     admin = login("admin@example.com", PASSWORD).path("accessToken").asText();
   }
 

@@ -1,4 +1,4 @@
-package com.dki.meeting.identity.application;
+package com.dki.meeting.identity.application.port.out;
 
 public interface PasswordHasher {
   String hash(String password);
