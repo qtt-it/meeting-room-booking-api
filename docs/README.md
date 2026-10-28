@@ -20,6 +20,7 @@ updated: 2026-10-28
 | [Design patterns](reference/design-patterns.md) | Concrete patterns and their implementation paths |
 | [Testing](guides/testing.md) | Unit, database integration and concurrency |
 | [Operations](runbooks/operations.md) | Configuration, health, backup and rollback |
+| [Production readiness](guides/production-readiness.md) | Fail-fast runtime settings and remaining environment gates |
 | [Conventions](reference/engineering-conventions.md) | Engineering and infrastructure conventions |
 | [Git workflow](guides/git-workflow.md) | Business branches, commits and pull requests |
 | [Backlog](../.planning/README.md) | Stories and tasks |
@@ -30,3 +31,4 @@ updated: 2026-10-28
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial documentation |
 | 2026-10-28 | @qtt-it | Index the architecture decision and implemented patterns |
+| 2026-10-28 | @qtt-it | Index production configuration and release requirements |

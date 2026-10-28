@@ -35,6 +35,11 @@ Tests do not use H2 because it does not verify PostgreSQL GiST indexes, row lock
 | Unit | Half-open windows, business hours, Sundays, horizon and recurrence |
 | Documentation | English language markers, composed/decomposed Unicode and local Markdown links |
 | HTTP foundation | Safe request IDs and MDC cleanup |
+| Architecture | Framework-free cores, independent input ports, feature isolation and cycle checks |
+| Application | Transaction commit/rollback, explicit actor checks and redacted credential diagnostics |
+| Domain policies | Aggregate creation/lifecycle, recurrence strategy registration and room specifications |
+| Runtime configuration | Actual prod profile defaults, fail-fast TLS/secrets/CORS checks and bootstrap control |
+| HTTP admission | Known/unknown-length body limits, exact boundary and correlated 413 responses |
 | Integration | Login, refresh, logout, password change, roles and room limits |
 | Booking integration | Pending requests, approval races, atomic series rollback, versions, capacity and invitations |
 | Database | Exclusion constraint, including direct SQL writes |
@@ -64,6 +69,16 @@ Read the current PR checks for the latest result. Unit success does not prove co
 
 Later changes must also pass CI at the exact PR head before merge.
 
+[The architecture CI run](https://github.com/qtt-it/meeting-room-booking-api/actions/runs/40657587996) verifies commit `298d0b6`:
+
+- 56 unit tests and 29 PostgreSQL integration tests.
+- Nine executable architecture rules.
+- Image build, Compose readiness and all 25 API requests.
+
+The runtime-hardening change adds configuration and body-limit regressions.
+Its local verification passed 70 unit tests and 30 integration tests.
+Use its exact-head CI checks for container evidence.
+
 ## Report locations
 
 Read `target/surefire-reports` and `target/failsafe-reports` in each module.
@@ -83,3 +98,4 @@ Editorial review is still required for unaccented prose.
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial testing guide |
 | 2026-10-28 | @qtt-it | Standardize all test guidance in English |
+| 2026-10-28 | @qtt-it | Record architecture evidence and runtime-hardening coverage |

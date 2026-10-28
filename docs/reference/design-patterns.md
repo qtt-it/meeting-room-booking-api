@@ -27,7 +27,7 @@ Do not add unused extension points.
 | Authorizer | BookingAuthorizer | Apply organizer and invitee permissions without framework state |
 | Mapper | BookingMapper and integration adapters | Expose stable views instead of domain aggregates |
 | Framework annotation | CurrentOperation and AdminOnly | Resolve request context and declare HTTP method security |
-| Middleware | RequestIdFilter and LoginRateLimitFilter | Apply request correlation and admission rules before controllers |
+| Middleware | RequestIdFilter, RequestBodyLimitFilter and LoginRateLimitFilter | Apply request correlation, bounded bodies and admission rules before controllers |
 | Central error boundary | GlobalExceptionHandler | Map semantic failures to sanitized HTTP responses and log unexpected failures once |
 
 ## Transaction semantics
@@ -69,3 +69,4 @@ It does not invent tenant identifiers, platform permissions or cloud-specific de
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Describe implemented patterns and their limits |
+| 2026-10-28 | @qtt-it | Include bounded-body admission middleware |
