@@ -19,6 +19,8 @@ Timestamp dùng `timestamptz`, ID dùng UUID, tên bảng/cột dùng `snake_cas
 | system_lock | Tuần tự hóa thao tác catalog | identity, room |
 | user_account | Tài khoản, role, BCrypt hash, version | Email chuẩn hóa unique |
 | refresh_session | Phiên refresh xoay vòng | user, family, hash unique |
+| refresh_family | Serialize refresh, reuse and logout | User and revocation timestamp |
+| activity_audit | Account, session and room mutations | Actor, action, resource, timestamp |
 | room | Tên, địa điểm, tầng, sức chứa, thiết bị | Unique slot/name khi active |
 | booking | Header chuỗi, organizer, trạng thái, recurrence | Room và user |
 | booking_occurrence | Từng buổi trong chuỗi | Composite FK giữ room khớp header |
