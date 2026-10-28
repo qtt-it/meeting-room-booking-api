@@ -11,70 +11,72 @@ updated: 2026-10-28
 
 ## Context
 
-Một công ty với khoảng 10 phòng không cần microservices hoặc message broker.
-Modular monolith giữ transaction duyệt phòng trong một database và một tiến trình.
+A modular monolith serves approximately 200 employees and 10 rooms.
+Approval requires one ACID transaction. Separate services or a message broker are unnecessary at this scale.
 
-## Module và trách nhiệm
+## Modules
 
-| Module | Trách nhiệm | Phụ thuộc nghiệp vụ |
+| Module | Responsibility | Dependencies |
 | --- | --- | --- |
-| foundation | Actor, lỗi có mã, envelope, request ID | Không |
-| identity | Tài khoản, password và phiên đăng nhập | foundation |
-| room | Danh mục phòng, giới hạn phòng, metadata | foundation |
-| booking | Booking, lịch lặp, duyệt, lời mời, calendar, tìm phòng | identity, room, foundation |
-| meeting-api | Compose module, security filter, config, migration | Các module trên |
+| foundation | Actor, errors, response envelope, request correlation | None |
+| identity | Accounts, passwords, sessions | foundation |
+| room | Catalog, active room limit, metadata | foundation |
+| booking | Requests, recurrence, approval, invitations, availability | identity, room, foundation |
+| meeting-api | Composition, security, configuration, migrations | Feature modules |
 
-Mỗi module nghiệp vụ có `domain`, `application`, `infra/db` và `infra/http`, như cách XTND tổ chức thư viện.
-Maven build-helper khai báo các source root. Domain không import JDBC, Spring MVC hoặc repository adapter.
+Feature modules contain domain, application, database adapter and HTTP adapter source roots.
+Maven build-helper registers these roots.
+Domain code does not import JDBC, Spring MVC or database adapters.
 
-## Luồng request
+## Request flow
 
-Security filter xác thực JWT, đọc trạng thái tài khoản hiện tại và tạo Actor.
-Controller kiểm tra shape và giới hạn input.
-Application service kiểm tra quyền, lấy dữ liệu, gọi domain policy và lưu trong transaction.
-Repository adapter thực hiện câu SQL có tham số.
-Global exception handler ghi lỗi một lần và trả error envelope.
+Security validates the JWT, reads the current account and creates an Actor.
+Controllers validate request shape and delegate to application services.
+Services check authorization, execute domain rules and persist changes in transactions.
+Adapters execute parameterized SQL. One exception handler records failures and returns the error envelope.
+An injected Clock makes time rules deterministic in tests.
 
-Chỉ composition root cấu hình token secret và các dependency toàn ứng dụng.
-Clock được inject để kiểm tra thời gian trong test.
+## Concurrent approvals
 
-## Duyệt cạnh tranh
+1. Lock the booking row with FOR UPDATE.
+2. Check the administrator role, pending state and expected version.
+3. Lock the room row with FOR UPDATE.
+4. Read approved occurrences that overlap the requested windows.
+5. Return 409 and alternatives on conflict.
+6. Update the header and all occurrences in one transaction.
+7. Let PostgreSQL enforce the exclusion constraint before commit.
 
-1. Khóa row booking bằng `FOR UPDATE`.
-2. Kiểm tra role, trạng thái pending và version.
-3. Khóa row phòng bằng `FOR UPDATE`.
-4. Đọc lại tất cả lịch đã duyệt giao thời gian.
-5. Nếu trùng, trả 409 và gợi ý từ dữ liệu hiện tại.
-6. Đổi trạng thái header và tất cả occurrence trong cùng transaction.
-7. PostgreSQL kiểm tra exclusion constraint trước khi commit.
+Approvals for the same room serialize. Different rooms remain independent.
+Room updates use the same room lock, so capacity cannot change between validation and approval.
 
-Các lần duyệt cùng phòng tuần tự hóa tại row phòng.
-Các phòng khác vẫn có thể duyệt độc lập.
-Room update dùng cùng khóa phòng nên không thể đổi sức chứa giữa lúc kiểm tra và duyệt.
+## Room limit
 
-## Giới hạn phòng
+Catalog changes lock a row in system_lock.
+Create and reactivate allocate a free slot from 1 through 10.
+A partial unique index on active slots also enforces the limit in the database.
 
-Room catalog có mutex row trong `system_lock`.
-Create/reactivate khóa row này rồi cấp một slot còn trống từ 1 đến 10.
-Partial unique index trên slot đang hoạt động bảo vệ giới hạn ở database.
+The room module declares a RoomUsage port.
+The booking module implements it to prevent room changes that invalidate approved reservations.
 
-## Identity
+## Sessions
 
-JWT dùng HS256, issuer và audience cố định. Access token hết hạn sau 15 phút.
-Refresh token là 32 byte ngẫu nhiên, lưu SHA-256 hash và hết hạn sau bảy ngày.
-Refresh khóa session, thu hồi token cũ và cấp token tiếp theo trong cùng family.
-Refresh reuse thu hồi cả family trong transaction được commit dù API trả 401.
+JWT access tokens use HS256 with issuer, audience and expiration validation.
+Access tokens expire after 15 minutes.
+Refresh tokens contain 32 random bytes. The database stores SHA-256 hashes and a seven-day expiry.
+Sessions also record the account security version.
 
-API đọc lại tài khoản và security version mỗi request.
-Disable có hiệu lực ngay. Đổi password tăng security version và thu hồi các refresh session.
-Logout thu hồi refresh family. Access token đã phát vẫn sống đến hạn.
+Refresh locks the session, revokes the old token and issues its replacement in the same family.
+Reuse revokes the whole family. That transaction commits despite the 401 response.
+Every authenticated request rechecks the active account and security version.
+Password changes increment the security version and revoke refresh sessions.
+Logout revokes the refresh family. Existing access tokens retain their original expiration.
 
 ## Trade-offs
 
-Các occurrence được tạo ngay, giới hạn 52 buổi. Không có scheduler materialize vô hạn.
-JDBC giữ SQL và khóa transaction rõ ràng. Flyway là nguồn schema duy nhất.
-List booking tải child records theo từng booking. Page tối đa 100, phù hợp quy mô đề.
-Có thể chuyển sang truy vấn batch nếu số booking tăng.
+The service materializes at most 52 occurrences when a request is submitted.
+JDBC makes SQL and locks explicit. Flyway owns schema changes.
+Booking pages load child records per booking, bounded by 100 items.
+A batch query can replace this approach if measured traffic requires it.
 
 ## History
 
