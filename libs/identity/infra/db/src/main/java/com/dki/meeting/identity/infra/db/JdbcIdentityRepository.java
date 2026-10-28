@@ -1,7 +1,7 @@
 package com.dki.meeting.identity.infra.db;
 
 import com.dki.meeting.foundation.PageResult;
-import com.dki.meeting.identity.application.IdentityRepository;
+import com.dki.meeting.identity.application.port.out.IdentityRepository;
 import com.dki.meeting.identity.domain.*;
 import java.sql.*;
 import java.time.Instant;

@@ -1,6 +1,6 @@
 package com.dki.meeting.room.infra.db;
 
-import com.dki.meeting.room.application.RoomRepository;
+import com.dki.meeting.room.application.port.out.RoomRepository;
 import com.dki.meeting.room.domain.Room;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

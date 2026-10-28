@@ -12,6 +12,8 @@ curl --fail http://localhost:8080/actuator/health/readiness
 ```
 
 Compose starts the API and PostgreSQL. Replace demo credentials before deployment.
+For a real environment, follow the [production readiness guide](docs/guides/production-readiness.md).
+Use the prod profile, private secrets and verified database TLS. The local stack is not a production deployment.
 
 - Swagger UI: http://localhost:8080/docs
 - OpenAPI: http://localhost:8080/v3/api-docs
@@ -62,6 +64,10 @@ tools/bruno/            Versioned API requests
 ```
 
 Maven builds five modules. Each feature uses separate source roots for its architectural layers.
+The domain and application core do not depend on Spring or JDBC.
+Typed use cases expose input ports. Transaction decorators, context annotations and integration adapters sit outside the core.
+ArchUnit tests enforce these boundaries.
+See the [pattern catalog](docs/reference/design-patterns.md) and [architecture decision](docs/decisions/ADR-002-clean-hexagonal-boundaries.md).
 
 ## Local development
 

@@ -9,29 +9,30 @@ updated: 2026-10-28
 
 # PostgreSQL data model
 
-Schema do Flyway quản lý trong `apps/meeting-api/src/main/resources/db/migration/`.
-Timestamp dùng `timestamptz`, ID dùng UUID, tên bảng/cột dùng `snake_case`.
+Flyway manages the schema in `apps/meeting-api/src/main/resources/db/migration/`.
+Timestamps use `timestamptz`. IDs use UUIDs. Table and column names use `snake_case`.
 
-## Bảng
+## Tables
 
-| Bảng | Mục đích | Khóa/quan hệ |
+| Table | Purpose | Keys and relations |
 | --- | --- | --- |
-| system_lock | Tuần tự hóa thao tác catalog | identity, room |
-| user_account | Tài khoản, role, BCrypt hash, version | Email chuẩn hóa unique |
-| refresh_session | Phiên refresh xoay vòng | user, family, hash unique |
+| system_lock | Serialize catalog changes | identity, room |
+| user_account | Account, role, BCrypt hash and version | Unique normalized email |
+| refresh_session | Rotating refresh session | User, family and unique token hash |
 | refresh_family | Serialize refresh, reuse and logout | User and revocation timestamp |
-| activity_audit | Account, session and room mutations | Actor, action, resource, timestamp |
-| room | Tên, địa điểm, tầng, sức chứa, thiết bị | Unique slot/name khi active |
-| booking | Header chuỗi, organizer, trạng thái, recurrence | Room và user |
-| booking_occurrence | Từng buổi trong chuỗi | Composite FK giữ room khớp header |
-| booking_attendee | Người được mời, phản hồi | PK booking + user |
-| booking_audit | Actor, action, lý do, timestamp | Booking |
+| activity_audit | Account, session and room mutations | Actor, action, resource and timestamp |
+| room | Name, location, floor, capacity and equipment | Unique active slot and name |
+| booking | Series header, organizer, status and recurrence | Room and user |
+| booking_occurrence | Individual meeting in a series | Composite foreign key keeps its room consistent with the header |
+| booking_attendee | Invited employee and response | Primary key: booking and user |
+| booking_audit | Actor, action, reason and timestamp | Booking |
 
-Occurrence và attendee thuộc booking. Audit và refresh session là các record lịch sử, không dùng optimistic version riêng.
-Room và user dùng điều kiện `WHERE version = :expected`.
-Booking khóa row rồi so version trước khi cập nhật.
+Occurrences and attendees belong to a booking.
+Audit and refresh session records do not have separate optimistic versions.
+Room and account updates use `WHERE version = :expected`.
+Booking updates lock the row and compare its version before a mutation.
 
-## Chống trùng
+## Overlap protection
 
 ```sql
 EXCLUDE USING gist (
@@ -40,41 +41,44 @@ EXCLUDE USING gist (
 ) WHERE (status = 'approved')
 ```
 
-Extension `btree_gist` hỗ trợ equality cho UUID cùng range trong GiST.
-Pending không nằm trong constraint.
-Calendar và availability chỉ đọc occurrence approved.
+The `btree_gist` extension supports UUID equality alongside time ranges in a GiST index.
+Pending occurrences are excluded from this constraint.
+Calendar and availability queries read approved occurrences only.
 
-Không dùng `SELECT COUNT` rồi insert làm bảo vệ duy nhất cho booking.
-Transaction cần giữ ràng buộc đúng cả khi có nhiều instance API.
+A count followed by an insert is not sufficient protection.
+Transactions and database constraints must protect the rule across all API instances.
 
-## Index
+## Indexes
 
-- Email và refresh token hash để xác thực.
-- Refresh family/user để thu hồi phiên.
-- Room slot/name active để kiểm soát catalog.
-- Organizer/status + created time cho list.
-- Occurrence booking để tải chuỗi.
-- Room + starts time cho calendar.
-- Attendee user để liệt kê lời mời.
-- Audit booking + created time để truy vết.
+- Email and refresh token hash support authentication.
+- Refresh family and user support session revocation.
+- Active room slot and name enforce catalog limits.
+- Organizer/status and creation time support booking lists.
+- Booking occurrence foreign keys support series reads.
+- Room and start time support calendars.
+- Attendee user supports invitation lists.
+- Booking audit and creation time support investigations.
 
-## Migration và triển khai
+## Migrations and deployment
 
-Database mới chạy migration trước khi bootstrap admin.
-Không sửa migration đã áp dụng. Tạo version mới cho thay đổi sau đó.
-Compose dùng role sở hữu database cho demo. Hạ tầng thật nên tách migrator và runtime role.
-Migrator cần quyền cài `btree_gist`, hoặc DBA cài extension trước.
+Migrations run before the initial administrator bootstrap.
+Never edit an applied migration. Add a new version for later changes.
+The demo Compose stack uses the database owner.
+Production infrastructure must separate migration and runtime roles.
+The migration role needs permission to install `btree_gist`, or a database administrator must install it first.
 
-Flyway `clean` bị vô hiệu hóa.
-Sau khi ghi dữ liệu, rollback bằng application image trước đó nếu schema còn tương thích.
-Thay đổi phá hủy cần migration bù hoặc restore bản backup, xem runbook.
+Flyway `clean` is disabled.
+Restore the previous application image only while the schema remains compatible.
+Destructive changes require a compensating migration or a verified backup restore.
+See the [operations runbook](runbooks/operations.md).
 
-## Nguồn
+## Sources
 
-[PostgreSQL range constraints](https://www.postgresql.org/docs/17/rangetypes.html#RANGETYPES-CONSTRAINT) mô tả ràng buộc chống giao khoảng thời gian.
+[PostgreSQL range constraints](https://www.postgresql.org/docs/17/rangetypes.html#RANGETYPES-CONSTRAINT) describe database-level overlap protection.
 
 ## History
 
 | Date | Author | Change |
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial model and concurrency constraints |
+| 2026-10-28 | @qtt-it | Standardize all data model prose in English |

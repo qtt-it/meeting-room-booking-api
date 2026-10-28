@@ -4,6 +4,9 @@ import com.dki.meeting.foundation.AppException;
 
 public class RefreshReuseException extends AppException {
   public RefreshReuseException() {
-    super(401, "Authentication.RefreshReuse", "This refresh session is no longer valid");
+    super(
+        com.dki.meeting.foundation.FailureKind.UNAUTHENTICATED,
+        "Authentication.RefreshReuse",
+        "This refresh session is no longer valid");
   }
 }

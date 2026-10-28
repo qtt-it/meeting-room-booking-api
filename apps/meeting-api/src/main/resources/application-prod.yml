@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    url: ${DATABASE_URL}
+    user: ${MIGRATION_USERNAME:}
+    password: ${MIGRATION_PASSWORD:}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+app:
+  security:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  bootstrap:
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+  docs:
+    enabled: false
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

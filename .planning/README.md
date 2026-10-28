@@ -11,8 +11,12 @@ Each story records acceptance criteria, implementation tasks, verification and r
 | [MB-005](backlog/stories/MB-005.md) | feature/MB-005-booking-approval | Approval and cancellation | [#13](https://github.com/qtt-it/meeting-room-booking-api/pull/13) |
 | [MB-006](backlog/stories/MB-006.md) | feature/MB-006-invitations-and-availability | Invitations and alternative rooms | [#14](https://github.com/qtt-it/meeting-room-booking-api/pull/14) |
 | [MB-007](backlog/stories/MB-007.md) | feature/MB-007-devops-and-documentation | DevOps and handoff documentation | [#15](https://github.com/qtt-it/meeting-room-booking-api/pull/15) |
+| [MB-008](backlog/stories/MB-008.md) | docs/MB-008-english-documentation | English documentation and regression checks | [#28](https://github.com/qtt-it/meeting-room-booking-api/pull/28) |
+| [MB-009](backlog/stories/MB-009.md) | feature/MB-009-clean-hexagonal | Clean and hexagonal architecture with framework adapters | [#30](https://github.com/qtt-it/meeting-room-booking-api/pull/30) |
+| [MB-010](backlog/stories/MB-010.md) | feature/MB-010-production-guardrails | Production configuration and HTTP admission guardrails | [#32](https://github.com/qtt-it/meeting-room-booking-api/pull/32) |
 
 Integrate MB-001 through MB-007 in order.
+Follow-up stories MB-008 through MB-010 are reviewed and integrated in order.
 Each feature targets develop after its prerequisite is merged.
 Use merge commits to preserve individual changes.
 Promote develop to main after the complete verification suite passes.

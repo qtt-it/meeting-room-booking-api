@@ -8,6 +8,22 @@ import java.util.*;
 public final class MeetingPolicy {
   public static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
+  private final Map<String, RecurrenceStrategy> strategies;
+
+  public MeetingPolicy() {
+    this(List.of(new DailyRecurrenceStrategy(), new WeeklyRecurrenceStrategy()));
+  }
+
+  public MeetingPolicy(List<RecurrenceStrategy> registered) {
+    var selected = new HashMap<String, RecurrenceStrategy>();
+    for (var strategy : registered)
+      if (selected.put(strategy.frequency(), strategy) != null)
+        throw new IllegalArgumentException("Duplicate recurrence strategy");
+    if (!selected.keySet().containsAll(Set.of("daily", "weekly")))
+      throw new IllegalArgumentException("Daily and weekly strategies are required");
+    strategies = Map.copyOf(selected);
+  }
+
   public List<TimeWindow> expand(TimeWindow first, Recurrence recurrence, Instant now) {
     int count = recurrence == null ? 1 : recurrence.count();
     var result = new ArrayList<TimeWindow>();
@@ -15,22 +31,8 @@ public final class MeetingPolicy {
     for (int i = 0; i < count; i++) {
       validate(next, now, true);
       result.add(next);
-      if (recurrence != null) {
-        var start = next.startsAt().atZone(ZONE);
-        var end = next.endsAt().atZone(ZONE);
-        if (recurrence.frequency().equals("weekly")) {
-          start = start.plusWeeks(recurrence.interval());
-          end = end.plusWeeks(recurrence.interval());
-        } else {
-          for (int n = 0; n < recurrence.interval(); n++) {
-            do {
-              start = start.plusDays(1);
-              end = end.plusDays(1);
-            } while (start.getDayOfWeek() == DayOfWeek.SUNDAY);
-          }
-        }
-        next = new TimeWindow(start.toInstant(), end.toInstant());
-      }
+      if (recurrence != null && i + 1 < count)
+        next = strategies.get(recurrence.frequency()).next(next, recurrence.interval(), ZONE);
     }
     return List.copyOf(result);
   }
