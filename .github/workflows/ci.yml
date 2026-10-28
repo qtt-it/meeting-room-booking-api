@@ -11,7 +11,20 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_DB: meeting_booking_test
+          POSTGRES_USER: meeting_test
+          POSTGRES_PASSWORD: test_database_password
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U meeting_test -d meeting_booking_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -19,4 +32,14 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
-      - run: ./mvnw -B -ntp verify
+      - name: Verify formatting, unit tests, integration tests and packaging
+        run: ./mvnw -B -ntp verify -Pintegration
+      - name: Retain test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/target/surefire-reports/
+            **/target/failsafe-reports/
+          retention-days: 14

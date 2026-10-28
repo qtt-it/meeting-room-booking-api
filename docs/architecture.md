@@ -65,7 +65,8 @@ Access tokens expire after 15 minutes.
 Refresh tokens contain 32 random bytes. The database stores SHA-256 hashes and a seven-day expiry.
 Sessions also record the account security version.
 
-Refresh locks the session, revokes the old token and issues its replacement in the same family.
+A family row serializes rotation, reuse and logout.
+Refresh then locks the session, revokes the old token and issues its replacement in the same family.
 Reuse revokes the whole family. That transaction commits despite the 401 response.
 Every authenticated request rechecks the active account and security version.
 Password changes increment the security version and revoke refresh sessions.
