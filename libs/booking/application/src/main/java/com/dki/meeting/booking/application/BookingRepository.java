@@ -18,5 +18,11 @@ public interface BookingRepository {
 
   List<TimeWindow> occupied(UUID roomId, Instant from, Instant to, UUID exclude);
 
+  PageResult<BusySlot> calendar(UUID roomId, Instant from, Instant to, int page, int size);
+
+  boolean respond(UUID bookingId, UUID userId, String response);
+
   void audit(UUID bookingId, UUID actor, String action, String details);
+
+  record BusySlot(UUID roomId, Instant startsAt, Instant endsAt) {}
 }

@@ -133,6 +133,46 @@ public class JdbcBookingRepository implements BookingRepository {
         .list();
   }
 
+  public PageResult<BusySlot> calendar(UUID room, Instant from, Instant to, int page, int size) {
+    String filter =
+        " from booking_occurrence where room_id=:room and status='approved' and starts_at<:to and ends_at>:from";
+    var data =
+        jdbc.sql(
+                "select room_id,starts_at,ends_at"
+                    + filter
+                    + " order by starts_at,id limit :size offset :offset")
+            .param("room", room)
+            .param("from", Timestamp.from(from))
+            .param("to", Timestamp.from(to))
+            .param("size", size)
+            .param("offset", PageResult.offset(page, size))
+            .query(
+                (rs, n) ->
+                    new BusySlot(
+                        rs.getObject(1, UUID.class),
+                        rs.getTimestamp(2).toInstant(),
+                        rs.getTimestamp(3).toInstant()))
+            .list();
+    long total =
+        jdbc.sql("select count(*)" + filter)
+            .param("room", room)
+            .param("from", Timestamp.from(from))
+            .param("to", Timestamp.from(to))
+            .query(Long.class)
+            .single();
+    return new PageResult<>(data, total, page, size);
+  }
+
+  public boolean respond(UUID booking, UUID user, String response) {
+    return jdbc.sql(
+                "update booking_attendee set response=:response,responded_at=now() where booking_id=:booking and user_account_id=:user")
+            .param("booking", booking)
+            .param("user", user)
+            .param("response", response)
+            .update()
+        == 1;
+  }
+
   public void audit(UUID booking, UUID actor, String action, String details) {
     jdbc.sql(
             "insert into booking_audit(booking_id,actor_id,action,details) values(:booking,:actor,:action,:details)")

@@ -51,6 +51,9 @@ public class BookingController {
 
   public record Decision(@NotNull @PositiveOrZero Long version, @Size(max = 1000) String reason) {}
 
+  public record InvitationResponse(
+      @NotNull @Pattern(regexp = "accepted|declined") String response) {}
+
   @PostMapping("/bookings")
   public ResponseEntity<?> create(@Valid @RequestBody BookingInput r) {
     var b = service.create(SecurityActor.current(), r.input());
@@ -98,5 +101,41 @@ public class BookingController {
     return ApiResponse.ok(
         service.cancel(SecurityActor.current(), id, r.version(), r.reason()),
         "Future occurrences canceled");
+  }
+
+  @PutMapping("/bookings/{id}/invitation-response")
+  public ApiResponse<?> respond(@PathVariable UUID id, @Valid @RequestBody InvitationResponse r) {
+    return ApiResponse.ok(
+        service.respond(SecurityActor.current(), id, r.response()), "Invitation response recorded");
+  }
+
+  @GetMapping("/rooms/{id}/calendar")
+  public ApiResponse<?> calendar(
+      @PathVariable UUID id,
+      @RequestParam Instant from,
+      @RequestParam Instant to,
+      @RequestParam(defaultValue = "1") int page,
+      @RequestParam(defaultValue = "20") int pageSize) {
+    return ApiResponse.page(service.calendar(id, from, to, page, pageSize));
+  }
+
+  @GetMapping("/rooms/availability")
+  public ApiResponse<?> available(
+      @RequestParam Instant startsAt,
+      @RequestParam Instant endsAt,
+      @RequestParam(defaultValue = "1") int minCapacity,
+      @RequestParam(defaultValue = "") @Size(max = 100) String location,
+      @RequestParam(defaultValue = "") @Size(max = 30) String floor,
+      @RequestParam(defaultValue = "") @Size(max = 30)
+          List<@NotBlank @Size(max = 50) String> equipment) {
+    return ApiResponse.ok(
+        service.available(
+            SecurityActor.current(),
+            new TimeWindow(startsAt, endsAt),
+            minCapacity,
+            location,
+            floor,
+            equipment),
+        "Retrieved successfully");
   }
 }

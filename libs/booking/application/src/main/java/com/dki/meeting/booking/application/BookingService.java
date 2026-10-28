@@ -159,6 +159,55 @@ public class BookingService {
     return repo.list(actor, scope, status, page, size);
   }
 
+  @Transactional
+  public Booking respond(Actor actor, UUID id, String response) {
+    if (!Set.of("accepted", "declined").contains(response))
+      throw AppException.invalid("The invitation response must be accepted or declined");
+    Booking b = find(id, true);
+    if (b.attendees().stream().noneMatch(a -> a.userId().equals(actor.id())))
+      throw AppException.forbidden();
+    if (!Set.of("pending", "approved").contains(b.status()))
+      throw AppException.invalid("The booking is no longer open");
+    if (b.windows().stream().noneMatch(w -> w.endsAt().isAfter(clock.instant())))
+      throw AppException.invalid("The booking has ended");
+    if (!repo.respond(id, actor.id(), response)) throw AppException.forbidden();
+    repo.audit(id, actor.id(), "invitation_responded", response);
+    return find(id, false);
+  }
+
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  public PageResult<BookingRepository.BusySlot> calendar(
+      UUID room, Instant from, Instant to, int page, int size) {
+    PageResult.offset(page, size);
+    rooms.get(room);
+    TimeWindow range = new TimeWindow(from, to);
+    if (Duration.between(range.startsAt(), range.endsAt()).compareTo(Duration.ofDays(31)) > 0)
+      throw AppException.invalid("Calendar ranges cannot exceed 31 days");
+    return repo.calendar(room, from, to, page, size);
+  }
+
+  public List<RoomView> available(
+      Actor actor,
+      TimeWindow w,
+      int capacity,
+      String location,
+      String floor,
+      List<String> equipment) {
+    policy.validate(w, clock.instant(), true);
+    if (capacity < 1 || capacity > 200)
+      throw AppException.invalid("Capacity must be between 1 and 200");
+    return rooms.list(actor, false).stream()
+        .filter(r -> r.capacity() >= capacity)
+        .filter(r -> location.isBlank() || r.location().equalsIgnoreCase(location))
+        .filter(r -> floor.isBlank() || r.floor().equalsIgnoreCase(floor))
+        .filter(
+            r ->
+                r.equipment()
+                    .containsAll(equipment.stream().map(s -> s.toLowerCase(Locale.ROOT)).toList()))
+        .filter(r -> conflicts(r.id(), List.of(w), null).isEmpty())
+        .toList();
+  }
+
   private Booking find(UUID id, boolean lock) {
     return repo.byId(id, lock).orElseThrow(() -> AppException.notFound("Booking"));
   }
