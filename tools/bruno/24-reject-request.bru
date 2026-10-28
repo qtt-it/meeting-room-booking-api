@@ -1,0 +1,31 @@
+meta {
+  name: Reject request
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/api/v1/bookings/{{rejectionId}}/rejection
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "version": {{rejectionVersion}},
+    "reason": "Collection rejection example"
+  }
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

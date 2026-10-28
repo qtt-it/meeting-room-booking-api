@@ -1,0 +1,46 @@
+meta {
+  name: Create recurring booking
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/bookings
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "roomId": "{{roomId}}",
+    "title": "Planning {{runId}}",
+    "startsAt": "{{startsAt}}",
+    "endsAt": "{{endsAt}}",
+    "attendeeIds": [
+      "{{employeeId}}"
+    ],
+    "recurrence": {
+      "frequency": "weekly",
+      "interval": 1,
+      "count": 2
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar("bookingId", res.getBody().data.id);
+  bru.setVar("bookingVersion", res.getBody().data.version);
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

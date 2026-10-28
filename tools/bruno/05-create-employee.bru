@@ -1,0 +1,37 @@
+meta {
+  name: Create employee
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "email": "employee-{{runId}}@example.com",
+    "displayName": "Demo employee",
+    "password": "{{employeePassword}}",
+    "role": "user"
+  }
+}
+
+script:post-response {
+  bru.setVar("employeeId", res.getBody().data.id);
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Accept invitation
+  type: http
+  seq: 20
+}
+
+put {
+  url: {{baseUrl}}/api/v1/bookings/{{bookingId}}/invitation-response
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{inviteToken}}
+}
+
+body:json {
+  {
+    "response": "accepted"
+  }
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

@@ -94,6 +94,8 @@ docker compose -f infra/compose.test.yml down
 Integration tests use the isolated `meeting_booking_test` database on port 55432.
 The fixture removes test data between tests.
 See the [testing guide](docs/guides/testing.md).
+Open [the Bruno collection](tools/bruno/README.md) to run all 25 API requests in order.
+The collection writes demo data; use a disposable development database.
 
 ## Decisions and documentation
 
@@ -104,5 +106,6 @@ Access tokens expire after 15 minutes. Opaque refresh tokens rotate and remain r
 Read the [documentation index](docs/README.md), [architecture](docs/architecture.md) and [decisions](docs/decisions/ADR-001-backend-design.md).
 The [backlog](.planning/README.md) records business branches and verification.
 Each business change has its own commit and pull request. Merge commits preserve the assessment history.
+See [merged pull requests](https://github.com/qtt-it/meeting-room-booking-api/pulls?q=is%3Apr+is%3Amerged) and [CI runs](https://github.com/qtt-it/meeting-room-booking-api/actions/workflows/ci.yml).
 
 Email delivery, email password recovery, monthly recurrence and single-occurrence edits are outside this version.

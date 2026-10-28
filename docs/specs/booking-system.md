@@ -1,7 +1,7 @@
 ---
 title: 'Meeting room booking specification'
 type: spec
-status: draft
+status: active
 author: '@qtt-it'
 created: 2026-10-28
 updated: 2026-10-28
