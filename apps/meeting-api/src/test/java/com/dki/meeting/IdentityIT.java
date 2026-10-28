@@ -12,6 +12,38 @@ import org.springframework.test.web.servlet.*;
 
 class IdentityIT extends ApiTestSupport {
   @org.junit.jupiter.api.Test
+  void protectsTheLastAdministratorAndDisablesAccessImmediately() throws Exception {
+    var me = call("GET", "/api/v1/users/me", admin, null, 200).path("data");
+    var disable =
+        java.util.Map.of(
+            "displayName",
+            "Admin",
+            "role",
+            "admin",
+            "isActive",
+            false,
+            "version",
+            me.path("version").asLong());
+    call("PUT", "/api/v1/users/" + me.path("id").asText(), admin, disable, 422);
+    call(
+        "POST",
+        "/api/v1/users",
+        admin,
+        java.util.Map.of(
+            "email",
+            "second-admin@example.com",
+            "displayName",
+            "Second administrator",
+            "password",
+            PASSWORD,
+            "role",
+            "admin"),
+        201);
+    call("PUT", "/api/v1/users/" + me.path("id").asText(), admin, disable, 200);
+    call("GET", "/api/v1/users/me", admin, null, 401);
+  }
+
+  @org.junit.jupiter.api.Test
   void openApiMarksLoginAsPublic() throws Exception {
     var api = call("GET", "/v3/api-docs", null, null, 200);
     assertThat(api.path("paths").path("/api/v1/auth/login").path("post").path("security").isArray())
