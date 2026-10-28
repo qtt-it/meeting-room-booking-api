@@ -1,0 +1,23 @@
+meta {
+  name: Availability search
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/api/v1/rooms/availability?startsAt={{startsAt}}&endsAt={{endsAt}}&minCapacity=2&location=HQ&floor=2&equipment=projector,whiteboard
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

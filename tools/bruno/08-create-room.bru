@@ -1,0 +1,41 @@
+meta {
+  name: Create room
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/rooms
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "name": "Demo {{runId}}",
+    "location": "HQ",
+    "floor": "2",
+    "capacity": 10,
+    "equipment": [
+      "projector",
+      "whiteboard"
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar("roomId", res.getBody().data.id);
+}
+
+tests {
+  test("Expected HTTP status and successful envelope", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

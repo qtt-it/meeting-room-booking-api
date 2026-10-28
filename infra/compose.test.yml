@@ -1,0 +1,15 @@
+name: meeting-room-booking-test
+services:
+  postgres-test:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: meeting_booking_test
+      POSTGRES_USER: meeting_test
+      POSTGRES_PASSWORD: test_database_password
+    ports: ["127.0.0.1:55432:5432"]
+    tmpfs: ["/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U meeting_test -d meeting_booking_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
