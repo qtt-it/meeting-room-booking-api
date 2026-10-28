@@ -12,6 +12,8 @@ public interface BookingRepository {
 
   void replace(Booking booking, UUID actor);
 
+  void changeStatus(UUID id, String status, UUID actor, String reason, Instant now);
+
   PageResult<Booking> list(Actor actor, String scope, String status, int page, int size);
 
   List<TimeWindow> occupied(UUID roomId, Instant from, Instant to, UUID exclude);

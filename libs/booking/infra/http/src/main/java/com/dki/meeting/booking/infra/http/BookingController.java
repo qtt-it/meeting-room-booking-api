@@ -49,6 +49,8 @@ public class BookingController {
     }
   }
 
+  public record Decision(@NotNull @PositiveOrZero Long version, @Size(max = 1000) String reason) {}
+
   @PostMapping("/bookings")
   public ResponseEntity<?> create(@Valid @RequestBody BookingInput r) {
     var b = service.create(SecurityActor.current(), r.input());
@@ -77,5 +79,24 @@ public class BookingController {
       @RequestParam(defaultValue = "1") int page,
       @RequestParam(defaultValue = "20") int pageSize) {
     return ApiResponse.page(service.list(SecurityActor.current(), scope, status, page, pageSize));
+  }
+
+  @PostMapping("/bookings/{id}/approval")
+  public ApiResponse<?> approve(@PathVariable UUID id, @Valid @RequestBody Decision r) {
+    return ApiResponse.ok(
+        service.approve(SecurityActor.current(), id, r.version()), "Booking approved");
+  }
+
+  @PostMapping("/bookings/{id}/rejection")
+  public ApiResponse<?> reject(@PathVariable UUID id, @Valid @RequestBody Decision r) {
+    return ApiResponse.ok(
+        service.reject(SecurityActor.current(), id, r.version(), r.reason()), "Booking rejected");
+  }
+
+  @PostMapping("/bookings/{id}/cancellation")
+  public ApiResponse<?> cancel(@PathVariable UUID id, @Valid @RequestBody Decision r) {
+    return ApiResponse.ok(
+        service.cancel(SecurityActor.current(), id, r.version(), r.reason()),
+        "Future occurrences canceled");
   }
 }

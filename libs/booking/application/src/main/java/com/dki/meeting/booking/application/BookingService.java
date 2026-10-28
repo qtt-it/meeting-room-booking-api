@@ -97,6 +97,49 @@ public class BookingService {
     return find(id, false);
   }
 
+  @Transactional
+  public Booking approve(Actor actor, UUID id, long expected) {
+    actor.requireAdmin();
+    Booking b = find(id, true);
+    version(b, expected);
+    requirePending(b);
+    RoomView room = rooms.lockActive(b.roomId());
+    users.active(b.organizerId());
+    validateAttendees(b.organizerId(), b.attendees().stream().map(Attendee::userId).toList(), room);
+    b.windows().forEach(w -> policy.validate(w, clock.instant(), true));
+    assertAvailable(room, b.windows(), id, b.attendees().size() + 1, actor);
+    repo.changeStatus(id, "approved", actor.id(), null, clock.instant());
+    repo.audit(id, actor.id(), "booking_approved", null);
+    return find(id, false);
+  }
+
+  @Transactional
+  public Booking reject(Actor actor, UUID id, long expected, String reason) {
+    actor.requireAdmin();
+    if (reason == null || reason.isBlank())
+      throw AppException.invalid("A rejection reason is required");
+    Booking b = find(id, true);
+    version(b, expected);
+    requirePending(b);
+    repo.changeStatus(id, "rejected", actor.id(), reason, clock.instant());
+    repo.audit(id, actor.id(), "booking_rejected", reason);
+    return find(id, false);
+  }
+
+  @Transactional
+  public Booking cancel(Actor actor, UUID id, long expected, String reason) {
+    Booking b = find(id, true);
+    manage(actor, b);
+    version(b, expected);
+    if (!Set.of("pending", "approved").contains(b.status()))
+      throw AppException.invalid("Only pending or approved bookings can be canceled");
+    if (b.windows().stream().noneMatch(w -> w.startsAt().isAfter(clock.instant())))
+      throw AppException.invalid("This booking has no future occurrence to cancel");
+    repo.changeStatus(id, "cancelled", actor.id(), reason, clock.instant());
+    repo.audit(id, actor.id(), "booking_cancelled", reason);
+    return find(id, false);
+  }
+
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   public Booking get(Actor actor, UUID id) {
     Booking b = find(id, false);
@@ -135,6 +178,11 @@ public class BookingService {
     if (b.version() != expected)
       throw AppException.conflict(
           "Concurrency.StaleVersion", "The booking has changed. Reload and retry");
+  }
+
+  private void requirePending(Booking b) {
+    if (!b.status().equals("pending"))
+      throw AppException.invalid("Only pending bookings can be reviewed");
   }
 
   private void editable(Booking b) {
