@@ -13,6 +13,8 @@ The base path is `/api/v1`. JSON uses camelCase.
 Timestamps require an offset or UTC, for example `2026-11-03T10:00:00+07:00`.
 Use a future business date when you run the examples.
 Swagger is at `/docs`. OpenAPI is at `/v3/api-docs`.
+The prod profile disables these public documentation endpoints.
+API request bodies are limited to 64 KiB, including unknown-length streams.
 
 ## Endpoints and permissions
 
@@ -141,6 +143,7 @@ The room catalog paginates active and archived rooms.
 | 409 | Room.LimitReached | Ten active rooms already exist |
 | 422 | BusinessRule.Violated | Business rule violation |
 | 429 | Authentication.RateLimited | More than 20 login attempts per IP per minute |
+| 413 | Request.PayloadTooLarge | The API body exceeds 64 KiB, checked before authentication |
 | 500 | Internal.Unexpected | Unexpected failure, without internal details |
 
 ```json
@@ -165,3 +168,4 @@ The room catalog paginates active and archived rooms.
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial API contract |
 | 2026-10-28 | @qtt-it | Standardize all reference prose in English |
+| 2026-10-28 | @qtt-it | Document the body limit and production documentation policy |

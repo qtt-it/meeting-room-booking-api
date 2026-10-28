@@ -18,6 +18,10 @@ updated: 2026-10-28
 | DATABASE_USERNAME, DATABASE_PASSWORD | Database credentials |
 | JWT_SECRET | At least 32 UTF-8 bytes, shared across API instances |
 | BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD | Create an administrator only when the account catalog is empty |
+| BOOTSTRAP_ADMIN_ENABLED | Explicit bootstrap control, false by default in prod |
+| SPRING_PROFILES_ACTIVE | Use prod for strict runtime validation |
+| FLYWAY_ENABLED | Control startup migrations in prod |
+| MIGRATION_USERNAME, MIGRATION_PASSWORD | Distinct migration role credentials in prod |
 | DOCS_ENABLED | Disable Swagger when API documentation must not be public |
 | CORS_ALLOWED_ORIGINS | Comma-separated allowed origins |
 | API_PORT, DATABASE_PORT | Compose host ports |
@@ -26,6 +30,7 @@ Compose provides demonstration defaults for local startup.
 Git ignores `.env`.
 Use a secret manager, private credentials and TLS outside local development.
 Generate a signing secret with `openssl rand -hex 32`.
+Read the [production readiness guide](../guides/production-readiness.md) before a real rollout.
 
 Bootstrap never replaces an existing password.
 Remove bootstrap credentials from deployment configuration after initial account creation.
@@ -44,7 +49,9 @@ Run it only against a disposable development database, never as a production hea
 
 The login limit is 20 attempts per IP per minute in one API instance.
 Configure ingress limits for a reverse proxy or multiple replicas.
-Ingress must bound JSON body sizes, request timeouts and concurrent connections.
+The application rejects API bodies larger than 64 KiB with a sanitized HTTP 413 response.
+It also bounds unknown-length streams before MVC reads them.
+Ingress must enforce body limits, request/upload timeouts and concurrent connections.
 The application does not trust client-supplied Forwarded or X-Forwarded-For headers.
 
 ## Startup and shutdown
@@ -99,6 +106,8 @@ Before production deployment, select the environment, hostname, secret manager, 
 | Approval returns 409 | Another approval reserved the room, or the version changed |
 | Recurrence returns 422 | Sunday, invalid business hours or the booking horizon |
 | Login returns 429 behind a proxy | Clients share one remote address. Apply limits at ingress |
+| Startup rejects a production setting | Check the named setting against the production readiness guide. Do not log its value |
+| API returns 413 | Reduce the JSON body below 64 KiB |
 
 ## History
 
@@ -106,3 +115,4 @@ Before production deployment, select the environment, hostname, secret manager, 
 | --- | --- | --- |
 | 2026-10-28 | @qtt-it | Initial operations runbook |
 | 2026-10-28 | @qtt-it | Standardize all operational guidance in English |
+| 2026-10-28 | @qtt-it | Add production-profile controls and the API body limit |

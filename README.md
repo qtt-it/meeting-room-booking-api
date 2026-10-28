@@ -12,6 +12,8 @@ curl --fail http://localhost:8080/actuator/health/readiness
 ```
 
 Compose starts the API and PostgreSQL. Replace demo credentials before deployment.
+For a real environment, follow the [production readiness guide](docs/guides/production-readiness.md).
+Use the prod profile, private secrets and verified database TLS. The local stack is not a production deployment.
 
 - Swagger UI: http://localhost:8080/docs
 - OpenAPI: http://localhost:8080/v3/api-docs
