@@ -75,9 +75,15 @@ Later changes must also pass CI at the exact PR head before merge.
 - Nine executable architecture rules.
 - Image build, Compose readiness and all 25 API requests.
 
-The runtime-hardening change adds configuration and body-limit regressions.
-Its local verification passed 70 unit tests and 30 integration tests.
-Use its exact-head CI checks for container evidence.
+[The runtime-hardening CI run](https://github.com/qtt-it/meeting-room-booking-api/actions/runs/40658707027) verifies commit `1758fa6`:
+
+- 70 unit tests and 30 PostgreSQL integration tests.
+- Image build, Compose readiness and all 25 API requests.
+- Actual prod-profile defaults and known/unknown-length body regressions.
+
+A local packaged prod-profile check also reached readiness with a separate runtime role over verified TLS 1.3.
+The public OpenAPI request returned 401, and a real chunked oversized request returned the correlated 413 response.
+That check used an isolated PostgreSQL 14.22 database and a temporary local certificate, not a production environment.
 
 ## Report locations
 
@@ -99,3 +105,4 @@ Editorial review is still required for unaccented prose.
 | 2026-10-28 | @qtt-it | Initial testing guide |
 | 2026-10-28 | @qtt-it | Standardize all test guidance in English |
 | 2026-10-28 | @qtt-it | Record architecture evidence and runtime-hardening coverage |
+| 2026-10-28 | @qtt-it | Record completed hardening CI and packaged-profile verification |

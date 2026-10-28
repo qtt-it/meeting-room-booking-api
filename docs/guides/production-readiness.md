@@ -79,7 +79,7 @@ The production guard rejects unused bootstrap credentials.
 
 The application bounds API request bodies to 64 KiB, including streams without Content-Length.
 Oversized bodies receive HTTP 413 with Request.PayloadTooLarge and a request ID.
-The filter buffers at most 65,537 bytes per request before passing accepted bodies to blocking MVC handlers.
+The filter reads at most 65,537 bytes from the stream and passes an accepted body of at most 65,536 bytes to blocking MVC handlers.
 It never logs body content.
 The limit applies before authentication, so an oversized unauthenticated API request can receive 413 instead of 401.
 
